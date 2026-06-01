@@ -80,6 +80,14 @@ These prompts are designed to be executed by AI coding assistants (like GitHub C
 | 28 | [PR Requirements](28-pr-requirements.md) | Quality standards and pre-submission checklist |
 | 29 | [Getting Started](29-getting-started-catalog-requests.md) | First catalog request tutorial |
 
+### Category 8: Platform Patterns (NEW)
+
+| # | Prompt | Description |
+|---|--------|-------------|
+| 30 | [Create MCP Skill](30-mcp-skill-definition.md) | YAML + markdown skill for AI agent execution |
+| 31 | [KeyValueStore Patterns](31-keyvaluestore-patterns.md) | Token, cursor, and state persistence |
+| 32 | [Async Catalog Request](32-async-catalog-request.md) | Background processing with task ID and EventHandler |
+
 ## Prerequisites
 
 Before using these prompts, ensure you have:
