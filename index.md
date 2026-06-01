@@ -58,6 +58,7 @@ Use this page as a clickable table of contents (mirrors the docs sidebar).
 - [Project structure](development/ProjectStructure.md)
 - [Build configuration](development/BuildConfiguration.md)
 - [Java 21 patterns](development/Java21Patterns.md)
+- [Framework 4 features](development/Framework4Features.md)
 - [Local development workflow](development/LocalDevelopmentWorkflow.md)
 - [Testing strategy](development/TestingStrategy.md)
 - [Sub-catalog requests](development/SubCatalogRequests.md)

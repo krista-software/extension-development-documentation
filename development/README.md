@@ -16,6 +16,7 @@ Hands-on development guides for implementing extension behaviors.
 - [Project structure](ProjectStructure.md)
 - [Build configuration](BuildConfiguration.md)
 - [Java 21 patterns](Java21Patterns.md)
+- [Framework 4 features](Framework4Features.md)
 - [Local development workflow](LocalDevelopmentWorkflow.md)
 - [Testing strategy](TestingStrategy.md)
 
