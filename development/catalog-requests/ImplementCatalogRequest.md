@@ -76,6 +76,27 @@ See: [Error handling](../../operations/ErrorHandling.md)
 - Mock the integration layer for controller tests.
 - Add a small number of end-to-end tests only when necessary.
 
+## Async catalog requests
+
+Some operations take too long to complete synchronously. Use the async pattern:
+
+1. Generate a unique task ID
+2. Submit the work to an `ExecutorService` background thread
+3. Return the task ID immediately to the caller
+4. When the background work completes, deliver the result via `EventHandler.handleEvent(taskId, result)`
+5. The caller retrieves results through a separate "Get Result" catalog request
+
+Use this pattern for bulk operations, long-running exports, or operations that depend on external processing time. Pair the async request with a corresponding `QUERY_SYSTEM` request to retrieve results.
+
+## Health check request
+
+Most extensions include a standard health check catalog request in the Setup area:
+
+- Type: `QUERY_SYSTEM` (or `CHANGE_SYSTEM`)
+- Area: `"Setup"`
+- Returns: boolean health status plus system resource details (memory, connectivity)
+- Purpose: verify the extension appliance is running and can reach external dependencies
+
 ## Checklist
 
 - [ ] Correct request type

@@ -99,7 +99,15 @@ These three locations must always agree:
 - `extension.version` in `release.properties`
 - `patch` in `version.properties` (if present)
 
-Consider a Gradle task that extracts the version from annotations and generates `release.properties` automatically.
+### generateReleaseProperties task
+
+Most extensions include a `generateReleaseProperties` Gradle task that eliminates manual drift:
+
+1. Parses the `@Extension` annotation for `version` and `name`
+2. Parses the `@Domain` annotation for `domain.name` and `ecosystem.name`
+3. Writes the extracted values to `release.properties`
+
+The JAR task should depend on this task so properties are always current at build time. The task uses regex matching against the source files — no compilation required.
 
 ## Packaging (fat JAR)
 

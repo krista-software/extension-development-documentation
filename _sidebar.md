@@ -82,6 +82,15 @@
     - [Packaging and deployment](custom-agents/PackagingAndDeployment.md)
     - [Best practices](custom-agents/BestPractices.md)
 
+- **Prompts**
+  - [AI-assisted prompts](prompts/README.md)
+
+- **Legacy guides**
+  - [Architecture and design patterns](extension-development-guides/Architecture_and_Design_Patterns.md)
+  - [Field types and response patterns](extension-development-guides/Field_Types_and_Response_Patterns_Guide.md)
+  - [Field types quick reference](extension-development-guides/Field_Types_Quick_Reference.md)
+  - [PR requirements](extension-development-guides/PR_REQUIREMENTS.md)
+
 - **Examples**
   - [Examples](examples/README.md)
 

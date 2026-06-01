@@ -49,7 +49,30 @@ Bundles static web content (HTML, images, CSS) served by the platform:
 - `path` — URL segment under which content is served
 - `file` — resource directory containing the static files
 
-Typical use: embed a Docsify-powered documentation site under `src/main/resources/docs/`.
+### Recommended documentation structure
+
+Most extensions embed a Docsify-powered site under `src/main/resources/docs/`:
+
+```
+src/main/resources/docs/
+├── index.html          # Docsify entry point
+├── README.md           # Landing page
+├── _sidebar.md         # Navigation sidebar
+├── assets/
+│   ├── docsify.js
+│   ├── search-min.js
+│   └── theme-simple.css
+├── _media/             # Screenshots and diagrams
+└── pages/
+    ├── overview.md
+    ├── Authentication.md
+    ├── release-notes.md
+    └── ...per-request docs
+```
+
+The `index.html` loads Docsify and renders the markdown files as a navigable documentation site. Each catalog request can have its own page under `pages/`.
+
+Access the docs via a custom tab (see below) or directly at the static resource path.
 
 ## Custom setup tabs
 
@@ -83,9 +106,18 @@ When an MCP client calls a tool before the user has authenticated:
 
 **Critical rule:** always rethrow `MustAuthorizeException` in catch blocks — never swallow it.
 
+### RequestContext and invokeAsUser
+
+Use `RequestContext.invokeAsUser()` to determine the execution mode:
+
+- **`true`** — MCP per-user path. Use the default public OAuth client and resolve tokens via `AccountProvider.lookupAccount(email)`.
+- **`false`** — operator shared path. Use credentials configured in the Setup tab.
+
+Check `invokeAsUser()` **before** loading operator attributes to avoid identity bleed between the two paths.
+
 ### Auth keyspace separation
 
-- Per-user tokens and operator tokens must use separate key shapes.
+- Per-user tokens and operator tokens must use separate key shapes in `KeyValueStore`.
 - `invokeAsUser=true` always uses the default public OAuth client; operator credentials are only consulted for shared paths.
 
 ## TelemetryMetrics

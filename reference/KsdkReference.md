@@ -176,6 +176,39 @@ public ProtoResponse handleWebhook(String pathElement, ProtoRequest request) {
 }
 ```
 
+## State and storage
+
+### `KeyValueStore`
+
+A per-invoker key-value store for persisting runtime state that must survive restarts (for example refresh tokens, delta sync cursors, cached credentials).
+
+When to use it:
+
+- **Refresh tokens** — store OAuth tokens keyed by user or invoker identity
+- **Sync cursors** — store delta links or checkpoint tokens for incremental data sync
+- **Cached configuration** — store resolved attributes that are expensive to compute
+
+When NOT to use it:
+
+- Do not use it as a general-purpose database or cache for request data.
+- Do not store secrets in plaintext — use secured attributes for credentials configured at setup time.
+
+Key operations: `get(key)`, `put(key, value)`, `remove(key)`.
+
+### `AccountProvider`
+
+Resolves Krista user accounts. Used in per-user authentication flows to look up a user by email or identifier:
+
+- `lookupAccount(email)` — returns the account's workspace contact ID
+- Commonly used in MCP flows to resolve the correct token storage key for a per-user caller
+
+### `RequestContext`
+
+Provides request-scoped context for the current catalog request execution:
+
+- `invokeAsUser()` — returns `true` when the request is invoked on behalf of a specific user (MCP per-user path) rather than the operator
+- Use this to branch between operator credentials and per-user credentials in authentication flows
+
 ## Entity definition (metadata)
 
 ### `EntityDefinition`

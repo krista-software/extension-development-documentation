@@ -39,7 +39,7 @@ These prompts are designed to be executed by AI coding assistants (like GitHub C
 
 | # | Prompt | Description |
 |---|--------|-------------|
-| 10 | [Add Sub-Catalog Request](10-add-subcatalog-request.md) | Helper operation for parent request |
+| 10 | [Add Sub-Catalog Request](10-add-sub-catalog-request.md) | Helper operation for parent request |
 | 11 | [Add Helper Class](11-add-helper-class.md) | Helper with validation and telemetry |
 
 ### Category 4: Setup Tab & Configuration
