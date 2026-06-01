@@ -38,6 +38,32 @@ Guidance:
 - handle retries from the webhook sender
 - return fast acknowledgements and process asynchronously when possible
 
+## Delta sync and change detection
+
+When the external system provides incremental queries:
+
+- **Cursor-based sync** — store a cursor/token in `KeyValueStore`, call the API's delta endpoint, update the cursor after each sync. Handle cursor expiration (HTTP 410) by clearing and re-syncing.
+- **Snapshot comparison** — store full state periodically, compare with current state, emit field-level change events (created, updated, deleted).
+
+See: [Prompt 33: Delta Sync](../prompts/33-delta-sync-change-detection.md) for implementation details.
+
+## Dual push/polling fallback
+
+Some systems (for example Gmail, Microsoft Graph) support both push notifications and polling. Use push as the primary path and polling as a fallback:
+
+- Run a background polling scheduler alongside webhook subscriptions
+- Use a shared deduplication set to prevent double-processing across both paths
+- Preserve request-scoped `ThreadLocal` context when dispatching from background threads
+
+## Event deduplication
+
+Track recently processed event IDs in a bounded in-memory set:
+
+- Use a `LinkedHashSet` or `ConcurrentHashMap` with capacity eviction
+- Evict oldest entries when capacity is reached (for example 1000 entries)
+- Check the set before processing — skip if already seen
+- Thread-safe access is required when webhook and polling paths run concurrently
+
 ## Reliability and idempotency
 
 Events are often delivered at-least-once.
@@ -49,6 +75,25 @@ Recommended:
 3. track processing outcomes with metrics
 
 See: [Retry and idempotency](../development/catalog-requests/RetryAndIdempotency.md)
+
+## Background scheduler pattern
+
+For extensions that need periodic polling independent of user requests:
+
+- Create a `ScheduledExecutorService` in the extension constructor or `INVOKER_LOADED`
+- Guard against duplicate schedulers — check if one is already running before starting
+- Preserve `ThreadLocal` context for the background thread
+- Shut down the scheduler in `INVOKER_REMOVED`
+- Make the interval configurable via Setup tab attributes
+
+## Webhook subscription lifecycle
+
+When external APIs require subscription registration:
+
+- **Create** a subscription with a callback URL and expiry (for example 28 days)
+- **Renew** before expiry — check remaining time on each request and renew if expiring soon
+- **Delete** on `INVOKER_REMOVED` to prevent orphaned subscriptions
+- **Handle validation handshakes** — some APIs echo a token on subscription creation
 
 ## Observability
 

@@ -36,10 +36,11 @@ Hide protocol differences (REST, GraphQL, SOAP, webhooks, queues) so Krista inte
 
 Manage connector runtime state safely:
 
-- access/refresh tokens
-- session identifiers
-- connection pools
-- caching (with invalidation rules)
+- access/refresh tokens — persist in `KeyValueStore` (encrypted at rest)
+- sync cursors/delta tokens — store per-resource in `KeyValueStore`
+- session identifiers — track per-user sessions with timeout
+- connection pools — initialize in `INVOKER_LOADED`, cleanup in `INVOKER_REMOVED`
+- caching — use `ConcurrentHashMap` for in-memory caches with expiry tracking
 
 ### 4) Error translation
 

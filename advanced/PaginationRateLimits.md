@@ -51,6 +51,17 @@ Keep it:
 - thread-safe
 - configurable (where appropriate)
 
+## Batch and bulk operations
+
+When the external API supports bulk endpoints:
+
+- **Chunk requests** into batches of 50-200 items to stay within API limits
+- **Handle partial failures** — track which items succeeded and which failed per batch
+- **Return aggregate results** — total processed, success count, failure count with details
+- **Use async pattern for large imports** — return a task ID and process in background
+
+See: [Prompt 40: Batch Operations](../prompts/40-batch-operations.md)
+
 ## Error handling and retries
 
 Treat rate limit errors as **external dependency failures** with bounded retries and exponential backoff.
