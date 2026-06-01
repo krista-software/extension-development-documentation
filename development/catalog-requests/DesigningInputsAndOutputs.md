@@ -24,8 +24,31 @@ A catalog request’s inputs and outputs are a contract. Treat them as stable pu
 
 ### Keep types predictable
 
-- Prefer simple scalar types for request parameters (text/number/boolean/date) unless you truly need an entity reference.
+- Prefer simple scalar types for request parameters unless you truly need an entity reference.
 - If a parameter is an ID, document the format (and validate it).
+
+### Available field types
+
+**Simple types:** Text, Number, Boolean, Date, Paragraph, RichText, FreeForm, Identifier, Email
+
+**Specialized types:** Currency, Percentage, Unit, Time, Phone, DateRange, DateTimeRange
+
+**Selection:** PickOne (dropdown with fixed values)
+
+**File:** File (with optional `multipleFileUpload = true` for batch uploads)
+
+**Entity references:** `Entity(TypeName)`, `[ Entity(TypeName) ]`
+
+**Composite/nested:** `[ Composite ]`, `[ { Key: Text, Value: Text } ]`, `[ [ Text ] ]`
+
+### Field attributes
+
+- `visualWidth` — controls display width: `"S"`, `"M"`, `"L"`, `"XL"`
+- `toolTip` — hover text with field guidance (wrap value in single quotes)
+- `isSecured` — marks text fields as password/secret (stored encrypted, hidden in UI)
+- `includeTimeOfDay` — adds time component to date fields
+- `showHowManyDaysInViewer` — controls date range display span
+- `defaultTimeSpan` — sets a default range for date fields
 
 ### Add an idempotency input for state-changing requests
 

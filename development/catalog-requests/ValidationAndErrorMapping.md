@@ -58,6 +58,25 @@ Sometimes you must validate against the external system (for example: project ex
 - **External dependency**: rate limiting, timeouts, 5xx upstream errors
 - **Internal/system**: unexpected exceptions, serialization failures
 
+## Remediation actions
+
+When validation fails, you can guide the user toward correction using remediation actions:
+
+- **Inform action** — display an informational message to participants
+- **Confirmation response** — prompt the user to re-enter corrected values via a sub-catalog request
+- **Allow Retry pattern** — add a boolean `Allow Retry` field; when true, store validation state and prompt for re-entry instead of failing immediately
+
+### Validation orchestrator pattern
+
+For extensions with many catalog requests sharing validation logic:
+
+- **Validator interface** — each validator handles one field or resource type
+- **ValidationOrchestrator** — registers validators and runs them against a field map
+- **ErrorHandlingStateManager** — persists validation state (keyed by a UUID) so the retry sub-catalog request can retrieve it
+- **ExtensionResponseGenerator** — builds confirmation or denial responses from validation results
+
+This pattern keeps validation logic reusable and decoupled from individual catalog request methods.
+
 ## Writing good error messages
 
 A good error message includes:

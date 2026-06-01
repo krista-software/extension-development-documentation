@@ -14,15 +14,18 @@ Framework 4 (`Krista_4_O`) extends the annotation model with containerized deplo
 
 Declare the Framework 4 model in the `@Extension` annotation:
 
-- `implementationModel = Extension.ImplementationModel.Krista_4_O`
+- `Krista_4_O` — standard Framework 4 model with per-request constructor injection, full KSDK integration, and the features described below
+- `Krista_4_1` — extended model used by MCP server extensions; adds additional lifecycle and governance capabilities
 
-This enables per-request constructor injection, full KSDK integration, and the features described below.
+Use `Krista_4_O` for most extensions. Use `Krista_4_1` only when building platform-level MCP server extensions.
 
 ## @Containerize
 
 Declares that the extension should be packaged and deployed as a container:
 
-- `baseImageVersion` — the base container image version to use
+- `baseImageVersion` — the base container image version to use (for example `"3.5.8"`, `"3.5.9"`, `"3.6.1-sp1"`)
+
+Use the base image version recommended for your platform release. Newer versions may include runtime fixes or dependency updates.
 
 ## @ChangeLog
 
@@ -36,6 +39,8 @@ Points to a markdown file containing structured release notes:
 - Categorize changes: New Feature, Bug Fix, Performance, Removed
 - Document backward compatibility and breaking changes for each version
 - Include a version-information table (extension version, developer, APIs version, global catalog version)
+
+There is no enforced path convention. Common patterns include `resources/docs/pages/release-notes.md` and `docs/pages/releaseNotes.md`. Choose one and keep it consistent within your extension.
 
 ## @StaticResource
 

@@ -37,15 +37,31 @@ At minimum, capture:
 
 ## Telemetry (metrics/tracing)
 
-Recommended metrics:
+### TelemetryMetrics
+
+Framework 4 extensions receive `TelemetryMetrics` via constructor injection. Use it to emit counters and timing data.
+
+### TelemetryHelper pattern
+
+Create a helper class to standardize metric names and tag maps across all catalog requests:
+
+- **`incrementCount(operationName)`** — count each invocation
+- **`recordSuccess(operationName, startTime, tags)`** — record success with duration
+- **`recordError(operationName, startTime, exception, tags)`** — record system errors
+- **`recordValidationError(operationName, startTime, message, tags)`** — record input validation failures
+- **`safeTagMap(key, value, ...)`** — build tag maps safely (null-safe, no secrets)
+
+Capture `System.currentTimeMillis()` at method entry and pass it to record methods for duration tracking.
+
+### Recommended metrics
 
 - request count by request name/type
 - request duration histogram
 - external call duration histogram
-- error count by category
+- error count by category (success, validation, system, auth)
 - retry count
 
-Tracing guidance:
+### Tracing guidance
 
 - create spans around upstream calls
 - propagate correlation IDs if the external API supports them

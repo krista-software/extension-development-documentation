@@ -69,6 +69,7 @@
 - **Reference**
   - [Reference](reference/README.md)
   - [Extension annotations](reference/ExtensionAnnotations.md)
+  - [Entity annotations](reference/EntityAnnotations.md)
   - [KSDK classes and interfaces](reference/KsdkReference.md)
   - [Invoker requests (@InvokerRequest)](reference/InvokerRequests.md)
   - [API requests (@ApiRequest)](reference/ApiRequests.md)

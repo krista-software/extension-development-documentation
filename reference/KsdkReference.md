@@ -23,10 +23,13 @@ This page summarizes commonly used components.
 
 Used to return success/error responses from catalog requests.
 
-Typical usage:
+There are several ways to construct responses:
 
-- `ExtensionResponse.success()` with data and metadata
-- `ExtensionResponse.error(...)` for failures
+- **`ExtensionResponseFactory.create(Map)`** — success response from a field-name-to-value map
+- **`ExtensionResponseFactory.create(Exception, String, ExceptionType)`** — error response from an exception
+- **`ExtensionResponseFactory.create(message, ExceptionType, remediationActions, subCatalogName, state)`** — error with remediation actions for guided retry
+- **`new ExtensionResponseBuilder().success(Map).build()`** — builder pattern for success
+- **`new ExtensionResponse(Result.SUCCESS, Map, null, null, null)`** — direct constructor
 
 Common patterns:
 
@@ -34,15 +37,12 @@ Common patterns:
 - Include useful metadata when applicable (for example: `"count"`, paging tokens).
 - Use warnings for partial success or degraded results.
 
-Example:
+### `RemediationActionFactory`
 
-```java
-import app.krista.extension.response.ExtensionResponse;
+Creates remediation actions attached to error responses. Used to guide users toward correcting invalid input:
 
-return ExtensionResponse.success()
-    .withData("users", users)
-    .withMetadata("count", users.size());
-```
+- **Inform action** — display an informational message to participants
+- Typically combined with sub-catalog request state for re-entry flows
 
 ### `InvokerStore`
 
@@ -188,11 +188,13 @@ You will most commonly see it paired with invoker requests such as provisioning 
 
 Many extensions rely on HK2 injection. Keep injection at the controller/service boundary and keep low-level integration clients easy to construct in tests.
 
-Common injection tips:
+Common injection patterns:
 
-1. Prefer constructor injection for core dependencies where feasible.
-2. Use `@Named(...)` when injecting configured dependencies (for example a dependent invoker).
-3. Do not inject platform dependencies deep into the integration layer—wrap them in a thin adapter in the service/controller boundary.
+1. **Constructor injection** — prefer this for core dependencies.
+2. **`@Named(...)`** — qualify injected dependencies by name (for example `@Named("API Key")` for a specific attribute, or `@Named("self")` for the extension's own invoker).
+3. **`InvokerAttributeProvider<T>`** — lazy attribute resolution. The value is fetched on first access, useful when attributes may not be available at construction time.
+4. **`@Service`** — HK2 service annotation for registering service classes (for example validators, orchestrators).
+5. Do not inject platform dependencies deep into the integration layer—wrap them in a thin adapter at the service/controller boundary.
 
 ## See also
 

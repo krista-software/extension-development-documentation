@@ -23,12 +23,22 @@ Attributes should be treated as **immutable configuration**: read them to build 
 
 Attributes are declared using Krista field annotations (for example `@Field.*`). The platform uses these declarations to render the Setup tab UI and to persist the values.
 
-Common declaration ideas:
+Common declaration patterns:
 
 - **Name stability matters**: changing a field name can break existing invokers.
 - **Required vs optional**: make fields required only when the extension cannot operate without them.
 - **Defaults**: where possible, provide safe defaults to reduce friction.
-- **Secured fields**: use secured/password-style fields for secrets.
+- **Secured fields**: use `isSecured = true` on `@Field.Text` for passwords, API keys, and client secrets. Secured values are stored encrypted and masked in the UI.
+- **Tooltips**: use `@Attribute(name = "toolTip", value = "'Guidance text'")` to provide hover text explaining what the field expects.
+- **Dropdowns**: use `@Field.PickOne` with a `values` array for fixed-choice fields (for example auth type, LLM model, region).
+
+## Injecting attributes at runtime
+
+Attributes can be injected into your extension class via dependency injection:
+
+- **Constructor injection** — inject `Invoker` and read attributes from `invoker.getAttributes()`
+- **`@Named` qualifier** — inject a specific attribute by name (for example `@Named("API Key")`)
+- **`InvokerAttributeProvider<T>`** — lazy attribute resolution; the value is fetched on first access rather than at construction time. Useful when the attribute may not be set during early lifecycle hooks.
 
 See also:
 

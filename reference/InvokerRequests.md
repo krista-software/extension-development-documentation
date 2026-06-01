@@ -36,7 +36,7 @@ They are implemented as methods annotated with `@InvokerRequest(...)`.
 
 | Type | Purpose | Typical signature | When called |
 |------|---------|-------------------|-------------|
-| `VALIDATE_ATTRIBUTES` | Validate configuration before save | `List<String> method(Map<String, Object> attributes)` | Before saving Setup tab configuration |
+| `VALIDATE_ATTRIBUTES` | Validate configuration before save | `List<String> method(Map<String, Object> attributes)` or `void method(Map<String, Object> attributes)` | Before saving Setup tab configuration |
 | `TEST_CONNECTION` | Validate external connectivity | `void method()` | When user clicks **Test Connection** (if enabled) |
 | `CUSTOM_TABS` | Provide custom Setup tab UI sections | `List<?> method()` | When rendering extension UI / Setup tab |
 
@@ -72,15 +72,28 @@ Some platforms expose additional invoker request types to support dynamic execut
 
 ### Validate attributes
 
+Two return patterns are supported. Choose one per extension and use it consistently:
+
+**Pattern 1 — return error list** (preferred when collecting multiple errors):
+
 ```java
 @InvokerRequest(InvokerRequest.Type.VALIDATE_ATTRIBUTES)
 public List<String> validateAttributes(Map<String, Object> attributes) {
   List<String> errors = new ArrayList<>();
-  String apiKey = (String) attributes.get("API Key");
-  if (apiKey == null || apiKey.isBlank()) {
-    errors.add("API Key is required");
-  }
+  if (isBlank(attributes.get("API Key"))) errors.add("API Key is required");
+  if (isBlank(attributes.get("Model")))   errors.add("Model must be selected");
   return errors;
+}
+```
+
+**Pattern 2 — throw on first failure** (preferred for fail-fast with connection test):
+
+```java
+@InvokerRequest(InvokerRequest.Type.VALIDATE_ATTRIBUTES)
+public void validateAttributes(Map<String, Object> attributes) {
+  if (isBlank(attributes.get("API Key")))
+    throw new IllegalArgumentException("API Key is required");
+  testConnection(attributes.get("API Key"));
 }
 ```
 
