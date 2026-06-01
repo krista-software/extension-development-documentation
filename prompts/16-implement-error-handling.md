@@ -320,6 +320,108 @@ public class ApiErrorMapper {
 }
 ```
 
+## 3a. Circuit Breaker for Repeated Failures
+
+Track consecutive failures against an external service and stop making requests
+once a threshold is reached. This prevents cascading failures and gives the
+downstream system time to recover.
+
+```java
+package {{PACKAGE_NAME}}.error;
+
+/**
+ * Lightweight circuit breaker. Tracks consecutive failures and opens the
+ * circuit after a configurable threshold. After a timeout period the circuit
+ * moves to half-open, allowing a single probe request through.
+ */
+public class CircuitBreaker {
+
+    private final int failureThreshold;
+    private final long recoveryTimeoutMs;
+
+    private int consecutiveFailures = 0;
+    private long openedAt = 0;
+    private State state = State.CLOSED;
+
+    public enum State { CLOSED, OPEN, HALF_OPEN }
+
+    public CircuitBreaker(int failureThreshold, long recoveryTimeoutMs) {
+        this.failureThreshold = failureThreshold;
+        this.recoveryTimeoutMs = recoveryTimeoutMs;
+    }
+
+    public synchronized boolean allowRequest() {
+        if (state == State.CLOSED) return true;
+        if (state == State.OPEN &&
+                System.currentTimeMillis() - openedAt >= recoveryTimeoutMs) {
+            state = State.HALF_OPEN;
+            return true;  // allow one probe request
+        }
+        return state == State.HALF_OPEN;  // already probing
+    }
+
+    public synchronized void recordSuccess() {
+        consecutiveFailures = 0;
+        state = State.CLOSED;
+    }
+
+    public synchronized void recordFailure() {
+        consecutiveFailures++;
+        if (consecutiveFailures >= failureThreshold) {
+            state = State.OPEN;
+            openedAt = System.currentTimeMillis();
+        }
+    }
+
+    public State getState() { return state; }
+}
+```
+
+## 3b. Fallback / Degraded Response Pattern
+
+When the circuit is open or a call fails after retries, return partial data
+instead of a full error. This keeps the caller unblocked and surfaces whatever
+information is still available.
+
+```java
+/**
+ * Example: return cached or partial results when the external API is down.
+ */
+public Map<String, Object> getRecordsWithFallback(Map<String, Object> params) {
+    if (!circuitBreaker.allowRequest()) {
+        // Circuit is open—return a degraded response with cached data
+        List<Map<String, Object>> cached = localCache.getRecords(params);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("success", true);
+        response.put("degraded", true);
+        response.put("message", "Returning cached data; live service temporarily unavailable");
+        response.put("records", cached);
+        return response;
+    }
+
+    try {
+        Map<String, Object> result = executeGetRecords(params);
+        circuitBreaker.recordSuccess();
+        return result;
+    } catch (ExtensionException e) {
+        circuitBreaker.recordFailure();
+        if (e.isRetryable()) {
+            // Fall back to cached data rather than propagating the error
+            List<Map<String, Object>> cached = localCache.getRecords(params);
+            if (!cached.isEmpty()) {
+                Map<String, Object> response = new LinkedHashMap<>();
+                response.put("success", true);
+                response.put("degraded", true);
+                response.put("message", "Partial data returned due to service error");
+                response.put("records", cached);
+                return response;
+            }
+        }
+        return ErrorResponseBuilder.buildErrorResponse(e);
+    }
+}
+```
+
 ## 4. Create Error Response Builder
 
 ```java

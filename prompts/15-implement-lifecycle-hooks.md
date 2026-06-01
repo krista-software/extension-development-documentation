@@ -195,6 +195,49 @@ public class {{EXTENSION_NAME}}Extension {
     }
 
     // ============================================================
+    // LIFECYCLE: INVOKER_REMOVED
+    // ============================================================
+
+    /**
+     * Called when the invoker is permanently removed from the system.
+     * 
+     * Use this to perform final cleanup that goes beyond INVOKER_UNLOADED:
+     * - Clear all KeyValueStore entries associated with this invoker
+     * - Shutdown any background schedulers that may have been persisted
+     * - Remove external registrations (webhooks, subscriptions)
+     * - Delete any cached tokens or credentials
+     * 
+     * This hook is not called on redeploys—only on permanent removal.
+     * 
+     * @param attributes Configuration at time of removal
+     */
+    @InvokerRequest(InvokerRequest.Type.INVOKER_REMOVED)
+    public void onRemoved(Map<String, Object> attributes) {
+        logger.info("Invoker permanently removed, performing final cleanup");
+
+        // First run the standard cleanup
+        cleanup();
+
+        // Clear all KeyValueStore entries for this invoker
+        try {
+            keyValueStore.deleteByPrefix(invokerId);
+            logger.debug("Cleared KeyValueStore entries for invoker {}", invokerId);
+        } catch (Exception e) {
+            logger.warn("Failed to clear KeyValueStore entries", e);
+        }
+
+        // Remove any persisted scheduler state
+        try {
+            keyValueStore.delete(invokerId + ":scheduler-state");
+            logger.debug("Cleared persisted scheduler state");
+        } catch (Exception e) {
+            logger.warn("Failed to clear scheduler state", e);
+        }
+
+        logger.info("Final cleanup complete for invoker {}", invokerId);
+    }
+
+    // ============================================================
     // INITIALIZATION METHODS
     // ============================================================
 
@@ -218,6 +261,14 @@ public class {{EXTENSION_NAME}}Extension {
     private void initializeScheduler() {
         // Only initialize if polling is enabled
         if (getBoolean(AttributeKeys.ENABLE_POLLING)) {
+            // Guard against duplicate schedulers—check if one is already running
+            // before creating a new thread pool. This prevents resource leaks when
+            // INVOKER_LOADED is called multiple times (e.g., during rapid redeploys).
+            if (this.scheduler != null && !this.scheduler.isShutdown()) {
+                logger.debug("Scheduler already running, skipping initialization");
+                return;
+            }
+
             this.scheduler = Executors.newScheduledThreadPool(2);
 
             int pollInterval = getInt(AttributeKeys.POLL_INTERVAL_MINUTES, 5);

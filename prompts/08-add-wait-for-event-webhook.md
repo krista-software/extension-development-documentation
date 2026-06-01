@@ -220,6 +220,38 @@ public class WebhookHandler {
 }
 ```
 
+## Event Deduplication
+
+External systems may deliver the same webhook more than once (at-least-once delivery). Track recently processed message IDs to avoid handling duplicates. Use a bounded `LinkedHashSet` or `LinkedList` with a capacity cap so memory stays bounded:
+
+```java
+private static final int DEDUP_CAPACITY = 1000;
+private final LinkedHashSet<String> processedIds = new LinkedHashSet<>();
+
+private boolean isDuplicate(String messageId) {
+    if (messageId == null) {
+        return false; // Cannot deduplicate without an ID
+    }
+    synchronized (processedIds) {
+        if (processedIds.contains(messageId)) {
+            return true;
+        }
+        processedIds.add(messageId);
+        // Evict oldest entry when capacity is exceeded
+        if (processedIds.size() > DEDUP_CAPACITY) {
+            Iterator<String> it = processedIds.iterator();
+            it.next();
+            it.remove();
+        }
+        return false;
+    }
+}
+```
+
+Call `isDuplicate(payload.getId())` early in `handleWebhook` and return `EventDeliveryResult.accepted()` immediately for duplicates to acknowledge receipt without re-processing.
+
+**At-least-once delivery note**: Because webhook providers may retry on network errors or slow responses, handlers must be idempotent. Applying the same event twice should produce the same outcome as applying it once. Where full idempotency is difficult, the deduplication cache above serves as a safety net.
+
 ## 3. Create Webhook Validator
 
 ```java

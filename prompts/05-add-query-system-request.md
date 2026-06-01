@@ -446,6 +446,30 @@ class {{REQUEST_NAME}}Test {
 4. **Handle errors gracefully** with appropriate error types
 5. **Log telemetry metrics** for monitoring
 
+## Cursor-Based Pagination Alternative
+
+Some APIs use cursor/token-based pagination instead of offset/limit. When the external system returns an opaque cursor (e.g., `nextCursor`, `continuationToken`), pass it through as the `Page Token` field rather than computing numeric offsets. This avoids issues with data shifting between pages.
+
+**Filtering and sorting parameters**: Add `@Field.Text` inputs for sort field, sort direction, and any API-specific filter expressions. Build them into the query string alongside pagination parameters:
+
+```java
+String sortField = (String) params.get("Sort Field");     // e.g., "created_at"
+String sortDir   = (String) params.get("Sort Direction");  // e.g., "desc"
+
+if (sortField != null && !sortField.isBlank()) {
+    queryParams.add("sortBy=" + sortField);
+    queryParams.add("sortOrder=" + (sortDir != null ? sortDir : "asc"));
+}
+```
+
+**Cap page size to a safe maximum**: Always clamp the requested page size to a hard ceiling on the server side, even if the caller provides a larger value. This protects both the external API and the Krista runtime from oversized responses:
+
+```java
+int pageSize = (pageSizeStr != null && !pageSizeStr.isBlank())
+    ? Integer.parseInt(pageSizeStr) : 25;
+pageSize = Math.min(pageSize, 100); // Hard cap
+```
+
 ## Related Prompts
 
 - [06 - Add CHANGE_SYSTEM Catalog Request](06-add-change-system-request.md)

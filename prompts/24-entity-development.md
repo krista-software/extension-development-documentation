@@ -98,6 +98,46 @@ public class {ENTITY_NAME} {
 }
 ```
 
+### Entity Relationship Patterns
+
+Entities can reference other entities to model one-to-many and many-to-one
+relationships. Use the `"[ Entity(Child) ]"` type syntax for collections and
+a plain `"Entity(Child)"` for single references. Always reference related
+entities by their primary key (ID field) rather than embedding the full object.
+
+```java
+// One-to-many: an Account has many Contacts
+@Field(name = "Contacts", type = "[ Entity(Contact) ]")
+public List<Contact> contacts;
+
+// Many-to-one reference by ID: a Contact belongs to an Account
+@Field(name = "Account ID", type = "Text")
+public String accountId;
+
+// Single entity reference (loaded on demand)
+@Field(name = "Primary Contact", type = "Entity(Contact)")
+public EntityReference<Contact> primaryContact;
+```
+
+### Entity Versioning
+
+When evolving an entity across extension versions, keep field names stable.
+Renaming a `@Field` annotation breaks existing conversation flows and stored
+entity data. Instead, add new fields alongside the old ones and deprecate
+gracefully. Always use `@Field` annotations consistently so the platform can
+track the schema.
+
+```java
+// Good: add a new field, keep the old one
+@Field(name = "Email", type = "Text")
+public String email;             // original field, keep stable
+
+@Field(name = "Secondary Email", type = "Text")
+public String secondaryEmail;   // new field added in v2
+
+// Bad: renaming "Email" to "Primary Email" breaks existing references
+```
+
 ### Entity Transformation Pipeline
 
 Understand the transformation flow:

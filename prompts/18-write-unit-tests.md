@@ -631,6 +631,39 @@ class {{AREA_CLASS}}Test {
 - [ ] Parameterized tests for similar scenarios
 - [ ] Mocks are properly configured
 
+## Build and CI Integration
+
+**SonarQube/JaCoCo Coverage**: Configure JaCoCo to generate XML reports so that SonarQube
+can ingest coverage data. In your `build.gradle`, apply the `jacoco` plugin and add:
+
+```groovy
+jacocoTestReport {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+test.finalizedBy jacocoTestReport
+```
+
+Ensure the CI pipeline runs `jacocoTestReport` after tests. Without the XML report,
+SonarQube will report 0% coverage even when tests pass.
+
+**Mockito with Java 21**: The default Mockito mock maker does not fully support Java 21
+sealed classes and hidden classes. Add the following JVM arguments to your test task to
+enable Byte Buddy experimental mode and the subclass mock maker:
+
+```groovy
+test {
+    jvmArgs '-XX:+EnableDynamicAgentLoading',
+            '-Dnet.bytebuddy.experimental=true',
+            '-Dmockito.mock-maker-class=org.mockito.internal.creation.bytebuddy.SubclassByteBuddyMockMaker'
+}
+```
+
+This avoids `InaccessibleObjectException` and warnings about illegal reflective access
+when mocking platform types or sealed hierarchies.
+
 ## Best Practices
 
 1. **Use descriptive test names** - Clearly state what is being tested

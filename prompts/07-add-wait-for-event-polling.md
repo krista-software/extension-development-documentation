@@ -371,6 +371,31 @@ If your extension doesn't use the event framework, implement polling manually:
     }
 ```
 
+## Exponential Backoff with Jitter
+
+Instead of a fixed poll interval, use exponential backoff with random jitter to reduce load on the external API and avoid thundering-herd problems when multiple requests poll simultaneously:
+
+```java
+int attempt = 0;
+int maxAttempts = (int) (timeoutMs / pollIntervalMs) + 1; // Bounded max attempts
+Random jitter = new Random();
+
+while (attempt < maxAttempts && System.currentTimeMillis() - startTime < timeoutMs) {
+    // Check current status
+    // ... (same condition check as above) ...
+
+    // Exponential backoff: base * 2^attempt, capped at 5 minutes
+    long delay = Math.min(pollIntervalMs * (1L << Math.min(attempt, 6)), 300_000L);
+    // Add random jitter of up to 25% of the delay
+    delay += jitter.nextLong(delay / 4 + 1);
+
+    Thread.sleep(delay);
+    attempt++;
+}
+```
+
+**Bounded max attempts**: Always cap the total number of polling iterations to prevent infinite loops. Derive the cap from the timeout and base interval, or set it explicitly (e.g., `maxAttempts = 200`). If both the timeout and the attempt counter are exhausted, return a timeout result rather than continuing silently.
+
 ## 5. Write Unit Tests
 
 ```java

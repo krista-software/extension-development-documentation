@@ -264,21 +264,52 @@ public class RetryExecutor {
     }
 
     /**
-     * Calculate delay with exponential backoff.
+     * Calculate delay with exponential backoff and jitter.
+     *
+     * Jitter randomization is critical to prevent the "thundering herd" problem.
+     * Without jitter, all clients that failed at the same time will retry at the
+     * same time, creating another burst of load on the already-stressed service.
+     *
+     * Three common jitter strategies:
+     *   1. Full jitter:   delay = random(0, baseDelay)       — widest spread
+     *   2. Equal jitter:  delay = baseDelay/2 + random(0, baseDelay/2)
+     *   3. Decorrelated:  delay = random(initialDelay, lastDelay * 3)
+     *
+     * The implementation below uses equal jitter (±50%) for a good balance between
+     * spread and predictability. Adjust the jitter factor for your use case.
      */
     private Duration calculateDelay(int attempt) {
         double delayMs = config.getInitialDelay().toMillis() *
             Math.pow(config.getBackoffMultiplier(), attempt - 1);
 
-        // Add jitter (±10%)
-        double jitter = delayMs * 0.1 * (Math.random() * 2 - 1);
+        // Equal jitter: keep half the delay fixed, randomize the other half.
+        // This spreads retries across [delay*0.5 .. delay*1.5] and avoids
+        // the thundering herd while keeping a reasonable lower bound.
+        double jitter = delayMs * 0.5 * (Math.random() * 2 - 1);
         delayMs += jitter;
 
         // Cap at max delay
         delayMs = Math.min(delayMs, config.getMaxDelay().toMillis());
 
-        return Duration.ofMillis((long) delayMs);
+        return Duration.ofMillis(Math.max(1, (long) delayMs));
     }
+
+    /**
+     * NOTE: Circuit breaker integration
+     *
+     * If your extension uses a CircuitBreaker (see Prompt 16), check the
+     * circuit state before attempting a retry. When the circuit is open there
+     * is no point retrying—the downstream service is known to be unavailable.
+     *
+     * Example guard inside the retry loop:
+     *   if (circuitBreaker != null && !circuitBreaker.allowRequest()) {
+     *       throw ExtensionException.systemError(
+     *           "Circuit breaker open, skipping retry", lastException, false);
+     *   }
+     *
+     * Record success/failure on the circuit breaker after each attempt so
+     * the breaker state stays current across retries.
+     */
 
     private void sleep(Duration duration) {
         try {

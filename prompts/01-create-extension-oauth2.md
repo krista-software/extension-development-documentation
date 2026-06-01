@@ -466,6 +466,25 @@ public class OAuth2Authenticator implements RequestAuthenticator {
 }
 ```
 
+## OAuth Implementation Notes
+
+**Scope Management**: Always request the minimum required OAuth scopes for your integration.
+Avoid broad or wildcard scopes. If your extension only reads calendar events, request the
+read-only scope rather than full read-write access. Over-permissioned tokens increase the
+blast radius if credentials are compromised.
+
+**Token Encryption at Rest**: Never store tokens in plain text. Use the platform-provided
+`KeyValueStore` for all token persistence, which handles encryption transparently. Do not
+implement your own encryption layer on top of `KeyValueStore`; the platform manages key
+rotation and secure storage internally.
+
+**MustAuthorizeException Pattern**: When your OAuth flow detects that the user must
+re-authorize (e.g., refresh token revoked, scopes changed), throw a
+`MustAuthorizeException`. In any catch block that handles this exception, always rethrow
+it rather than converting it to an error response. The MCP runtime relies on this
+exception propagating to trigger the re-authorization flow in the client. Swallowing or
+wrapping it will silently break authorization prompts.
+
 ## 6. Create Area Class (Controller)
 
 ```java

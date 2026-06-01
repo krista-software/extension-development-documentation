@@ -398,6 +398,32 @@ For update operations, modify the catalog request:
     }
 ```
 
+## Batch Operations
+
+For bulk create or update scenarios, accept a `List` of items as input and iterate over them in a single request method. Wrap individual API calls so that a failure on one item does not abort the entire batch:
+
+```java
+@Field.TextArea(name = "Items JSON", required = true,
+    description = "JSON array of {{ENTITY_NAME}} objects to create")
+@Field.Output(name = "Created IDs", type = Field.Output.Type.TEXT)
+@Field.Output(name = "Failed Count", type = Field.Output.Type.NUMBER)
+```
+
+Collect per-item results and return a summary (`Created IDs`, `Failed Count`, and an error list) so the caller can decide whether to retry the failures.
+
+## Optimistic Locking
+
+When the external API supports versioning (e.g., `version`, `ETag`, or `If-Match` headers), include the version field in update requests to prevent overwriting concurrent changes:
+
+```java
+String version = (String) params.get("Version");
+if (version != null && !version.isBlank()) {
+    headers.put("If-Match", version);
+}
+```
+
+If the server responds with `409 Conflict` or `412 Precondition Failed`, return a `LOGIC_ERROR` indicating the resource was modified since it was last read, and advise the caller to re-fetch and retry.
+
 ## 5. Write Unit Tests
 
 ```java

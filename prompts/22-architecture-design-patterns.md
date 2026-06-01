@@ -173,7 +173,92 @@ public class ExtensionResponseFactory {
 }
 ```
 
-### 3. Helper Class Pattern (Request Processing)
+### 3. Service Layer Abstraction
+
+Separate business logic from Area controller methods. Area classes should only
+handle parameter extraction and response building; all domain logic belongs in a
+dedicated service class. This keeps Area methods short (under 30 lines) and
+makes business rules independently testable.
+
+```java
+// Service interface — defines business operations, no Krista annotations
+public interface RecordService {
+    RecordResult createRecord(String name, String email);
+    RecordResult getRecord(String recordId);
+    List<RecordResult> searchRecords(String query, int limit);
+}
+
+// Service implementation — contains all business logic
+public class RecordServiceImpl implements RecordService {
+    private final ApiClient apiClient;
+
+    public RecordServiceImpl(ApiClient apiClient) {
+        this.apiClient = apiClient;
+    }
+
+    @Override
+    public RecordResult createRecord(String name, String email) {
+        // Validation, transformation, API call, result mapping
+        Map<String, Object> payload = Map.of("name", name, "email", email);
+        ApiResponse response = apiClient.post("/records", payload);
+        return RecordResult.from(response);
+    }
+}
+
+// Area class — thin controller layer, delegates to the service
+public class RecordsArea {
+    private final RecordService recordService;
+
+    @CatalogRequest(name = "Create Record", area = "Records",
+                    type = CatalogRequest.Type.CHANGE_SYSTEM)
+    public ExtensionResponse createRecord(
+            @Field.Text(name = "Name", required = true) String name,
+            @Field.Text(name = "Email", required = true) String email) {
+        RecordResult result = recordService.createRecord(name, email);
+        return ExtensionResponseFactory.create(result.toMap());
+    }
+}
+```
+
+### 4. DAO / Repository Pattern for External API Calls
+
+Wrap external API interactions behind a repository interface so that Area and
+Service classes never construct HTTP requests directly. This centralizes URL
+building, header management, and response parsing in one place, and makes it
+straightforward to swap the backing API or add caching.
+
+```java
+public interface RecordRepository {
+    ApiRecord findById(String id);
+    List<ApiRecord> findByQuery(String query, int limit);
+    ApiRecord save(ApiRecord record);
+    void delete(String id);
+}
+
+public class RestRecordRepository implements RecordRepository {
+    private final ApiClient apiClient;
+
+    public RestRecordRepository(ApiClient apiClient) {
+        this.apiClient = apiClient;
+    }
+
+    @Override
+    public ApiRecord findById(String id) {
+        ApiResponse response = apiClient.get("/records/" + id);
+        if (!response.isSuccess()) throw ApiErrorMapper.mapApiError(response);
+        return ApiRecord.fromResponse(response);
+    }
+
+    @Override
+    public ApiRecord save(ApiRecord record) {
+        ApiResponse response = apiClient.post("/records", record.toPayload());
+        if (!response.isSuccess()) throw ApiErrorMapper.mapApiError(response);
+        return ApiRecord.fromResponse(response);
+    }
+}
+```
+
+### 5. Helper Class Pattern (Request Processing)
 
 ```java
 public class UploadFileHelper {
