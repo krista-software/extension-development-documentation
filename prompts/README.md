@@ -80,13 +80,31 @@ These prompts are designed to be executed by AI coding assistants (like GitHub C
 | 28 | [PR Requirements](28-pr-requirements.md) | Quality standards and pre-submission checklist |
 | 29 | [Getting Started](29-getting-started-catalog-requests.md) | First catalog request tutorial |
 
-### Category 8: Platform Patterns (NEW)
+### Category 8: Platform Patterns
 
 | # | Prompt | Description |
 |---|--------|-------------|
 | 30 | [Create MCP Skill](30-mcp-skill-definition.md) | YAML + markdown skill for AI agent execution |
 | 31 | [KeyValueStore Patterns](31-keyvaluestore-patterns.md) | Token, cursor, and state persistence |
 | 32 | [Async Catalog Request](32-async-catalog-request.md) | Background processing with task ID and EventHandler |
+
+### Category 9: Data & Sync Patterns
+
+| # | Prompt | Description |
+|---|--------|-------------|
+| 33 | [Delta Sync & Change Detection](33-delta-sync-change-detection.md) | Cursor, webhook, and snapshot sync strategies |
+| 34 | [Database SQL Integration](34-database-sql-integration.md) | Connection pooling, sanitization, batch execution |
+| 35 | [API Query Builder](35-api-query-builder.md) | SOQL, OData, and REST filter builders |
+| 36 | [Input Sanitization & Security](36-input-sanitization-security.md) | SQL injection, path traversal, log sanitization |
+| 37 | [File Operations](37-file-operations.md) | Upload, download, folder ops, sharing |
+
+### Category 10: Enterprise Integration Patterns
+
+| # | Prompt | Description |
+|---|--------|-------------|
+| 38 | [CRM Field Mapping](38-crm-field-mapping.md) | Custom fields, OData binding, find-or-create, diff detection |
+| 39 | [Circuit Breaker & Resilience](39-circuit-breaker-resilience.md) | Circuit breaker, fallback, retry with jitter |
+| 40 | [Batch Operations](40-batch-operations.md) | Bulk create/update, chunked processing, partial failure |
 
 ## Prerequisites
 
