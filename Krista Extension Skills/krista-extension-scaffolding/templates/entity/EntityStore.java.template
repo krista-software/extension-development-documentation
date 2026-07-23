@@ -1,28 +1,39 @@
-    package {{PACKAGE}}.catalog.stores;
+package {{PACKAGE}}.catalog.stores;
 
+import app.krista.extension.executor.QueryClause;
 import app.krista.extension.executor.SearchCondition;
 import app.krista.extension.executor.SearchQuery;
 import app.krista.extension.util.EntityStore;
 import {{PACKAGE}}.catalog.entities.{{ENTITY_CLASS}};
 import org.jvnet.hk2.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
- * EntityStore for {{ENTITY_NAME}} — the entity-search contract for an @Entity(supportStore = true).
+ * EntityStore for {{ENTITY_NAME}} — the store IS the CRUD + search implementation for an
+ * @Entity(supportStore = true). One @Service class per searchable entity implementing
+ * app.krista.extension.util.EntityStore<{{ENTITY_CLASS}}>; HK2 discovers and binds it automatically.
  *
- * The store IS the search implementation. One @Service class per searchable entity implementing
- * app.krista.extension.util.EntityStore<{{ENTITY_CLASS}}>. HK2 discovers it automatically.
+ * Delegation: the store calls a {{DAO_CLASS}} (which owns the HTTP/query to the backend) and maps
+ * DTO<->entity via a transformer/catalog-type. See the entity-search-implementation skill:
+ * references/entitystore-crud.md (create/get/update/delete) and the 12-step search template.
  *
- * Contract (all 9 methods). Declare `throws IOException` on the ones your backend needs it on.
- *   create/get/update/delete/contains, two search overloads, count, lookup.
- * Search never throws to the executor: catch, log, and return List.of() from search.
+ * Error policy (from the reference stores):
+ *  - create/get/update: catch, LOG, return an empty entity / null (mutation errors surface via the Area).
+ *  - delete: FAIL LOUD — throw IllegalArgumentException on a blank key.
+ *  - search: NEVER throws to the executor — catch and return List.of().
+ *  - contains/count/lookup: stub (false/0/empty) unless the backend supports them cheaply.
  */
 @Service
 public class {{ENTITY_CLASS}}Store implements EntityStore<{{ENTITY_CLASS}}> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger({{ENTITY_CLASS}}Store.class);
 
     private final {{DAO_CLASS}} dao;
 
@@ -31,58 +42,109 @@ public class {{ENTITY_CLASS}}Store implements EntityStore<{{ENTITY_CLASS}}> {
         this.dao = dao;
     }
 
+    // ---- CREATE: validate → dao.add(fields) returns id → re-fetch so the created entity is returned ----
     @Override
     public {{ENTITY_CLASS}} create(Map<String, Object> entityAttributeField) {
-        // TODO: business logic
-        return null;
+        if (entityAttributeField == null || entityAttributeField.isEmpty()) {
+            LOGGER.warn("{{ENTITY_NAME}} create: attribute field map is null/empty");
+            return new {{ENTITY_CLASS}}();
+        }
+        try {
+            String id = dao.add(entityAttributeField);   // POST → returns new primary key
+            return get(id);                               // re-fetch the created record
+        } catch (IllegalArgumentException cause) {
+            LOGGER.error(cause.getMessage(), cause);
+            return new {{ENTITY_CLASS}}();
+        }
     }
 
+    // ---- GET by primary key → map DTO to entity ----
     @Override
-    public {{ENTITY_CLASS}} get(String primaryKey) throws IOException {
-        // TODO: business logic
-        return null;
+    public {{ENTITY_CLASS}} get(String primaryKey) {
+        if (primaryKey == null || primaryKey.isEmpty()) {
+            LOGGER.warn("{{ENTITY_NAME}} get: primary key is null/empty");
+            return null;
+        }
+        try {
+            return {{ENTITY_CLASS}}Transformer.transform(dao.getById(primaryKey));  // DTO/JSON → entity
+        } catch (IllegalArgumentException cause) {
+            LOGGER.error(cause.getMessage(), cause);
+            return null;
+        }
     }
 
+    // ---- UPDATE: map entity → DTO → dao.update → re-fetch ----
     @Override
-    public {{ENTITY_CLASS}} update({{ENTITY_CLASS}} entity) throws IOException {
-        // TODO: business logic
-        return entity;
+    public {{ENTITY_CLASS}} update({{ENTITY_CLASS}} entity) {
+        if (entity == null) {
+            LOGGER.warn("{{ENTITY_NAME}} update: entity is null");
+            return null;
+        }
+        try {
+            dao.update(entity);                 // PATCH/PUT the changed fields
+            return get(entity.id);              // re-fetch the updated record
+        } catch (IllegalArgumentException cause) {
+            LOGGER.error(cause.getMessage(), cause);
+            return null;
+        }
     }
 
+    // ---- DELETE: fail loud on blank key (destructive op must not silently no-op) ----
     @Override
     public void delete(String primaryKey) {
-        // TODO: business logic — deletes may fail loud.
+        if (primaryKey == null || primaryKey.isEmpty()) {
+            throw new IllegalArgumentException(
+                "{{ENTITY_NAME}} ID is required for deletion. Provide the id of the {{ENTITY_NAME}} to delete.");
+        }
+        dao.delete(primaryKey);                 // DELETE; let backend errors propagate
     }
 
     @Override
-    public boolean contains(String primaryKey) throws IOException {
-        // TODO: business logic
+    public boolean contains(String primaryKey) {
+        // Cheap existence check if the backend supports it; else stub false.
         return false;
     }
 
-    @Override
-    public List<{{ENTITY_CLASS}}> search(List<SearchCondition> conditions, long pageIndex, int pageSize) throws IOException {
-        // conditions: each has getFieldName()/getOperand(). Return List.of() on error (never throw).
-        // TODO: business logic
-        return List.of();
-    }
-
+    // ---- SEARCH: Id fast-path; empty conditions → default page; build backend query via a dialect helper.
+    //      See the entity-search-implementation skill's 12-step search template for the full pattern. ----
     @Override
     public List<{{ENTITY_CLASS}}> search(SearchQuery searchQuery, long pageIndex, int pageSize) throws IOException {
-        // searchQuery.getSearchConditions() / getQueryClauses()
-        // TODO: business logic
-        return List.of();
+        try {
+            if (searchQuery == null || searchQuery.getSearchConditions() == null
+                    || searchQuery.getSearchConditions().isEmpty()) {
+                return dao.list(Math.max(pageSize, 200), pageIndex).stream()
+                        .map({{ENTITY_CLASS}}Transformer::transform).collect(Collectors.toList());
+            }
+            List<SearchCondition> conditions = searchQuery.getSearchConditions();
+            List<QueryClause> clauses = searchQuery.getQueryClauses();
+            // Id fast-path
+            for (SearchCondition sc : conditions) {
+                if ("Id".equalsIgnoreCase(sc.getFieldName()) && sc.getOperand() != null) {
+                    String id = String.valueOf(sc.getOperand()).trim();
+                    if (!id.isEmpty()) { var e = get(id); return e != null ? List.of(e) : List.of(); }
+                }
+            }
+            // TODO: build the backend query from (conditions, clauses) via your dialect/query builder,
+            //       call dao.query(...), map to entities. (12-step template in the entity-search skill.)
+            return List.of();
+        } catch (Exception cause) {              // search NEVER throws to the executor
+            LOGGER.error("{{ENTITY_NAME}} search failed", cause);
+            return List.of();
+        }
     }
 
     @Override
-    public long count(List<SearchCondition> conditions) throws IOException {
-        // TODO: business logic (may return 0 if the backend can't cheaply count)
-        return 0;
+    public List<{{ENTITY_CLASS}}> search(List<SearchCondition> conditions, long pageIndex, int pageSize) {
+        return List.of();                        // legacy overload — return List.of()
+    }
+
+    @Override
+    public long count(List<SearchCondition> conditions) {
+        return 0;                                // stub unless the backend can count cheaply
     }
 
     @Override
     public List<String> lookup(Map<String, Object> fields, List<String> fieldNames) {
-        // TODO: business logic (name -> id resolution; may return List.of())
-        return List.of();
+        return List.of();                        // name→id resolution; stub if unused
     }
 }

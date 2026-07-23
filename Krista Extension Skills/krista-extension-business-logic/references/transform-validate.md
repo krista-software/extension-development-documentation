@@ -3,6 +3,12 @@
 Full code: `idioms/Transformer.java`, `idioms/Validation.java`.
 
 ## Transformers (JSON/DTO → Krista entity)
+> **Always transform to an `@Entity` — never pass the raw vendor JSON straight through as a
+> `FreeForm`/`Map` output.** If a catalog request returns a domain object, it declares an
+> `Entity(<Name>)` / `[ Entity(<Name>) ]` output and this transformer produces it. Skipping the entity
+> and returning the raw response is a defect (no fields in Krista, not composable). `FreeForm` output is
+> only for genuinely unstructured data. See scaffolding `field-types.md` → "Entity vs FreeForm".
+
 - **Stateless final class, private constructor, static methods**: `transform(JsonObject)` (null-in →
   null-out) and `transformList(JsonArray)` (never null; skip non-object elements).
 - Every field read goes through **null-safe accessors** — never `json.get(k).getAsX()` directly.

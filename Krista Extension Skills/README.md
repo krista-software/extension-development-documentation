@@ -25,6 +25,7 @@ other skills in as phases. Reach for an individual skill directly only when you 
 | `entity-search-implementation` | Implement Krista entity search (EntityStore pattern) for a system's objects. | 5a |
 | `solution-sdk-integration` | Add a "Solutions" tab to any extension (generate conversations/agents from catalog requests; import packaged solutions) via the Solution SDK. | 5c |
 | `krista-extension-doc-writer` | Author the in-platform Documentation tab from scratch (technical-writer voice + page templates). | 6 |
+| `krista-extension-testing` | Unit-testing policy — test the pure-Java classes only (transformers, validation, builders, client); deliberately neglect the framework classes (kept thin, validated by build + manual). | 7 |
 | `krista-extension-docs` | Sync/audit an existing Documentation tab against the code before a PR (+ `audit_docs.py`). | 7 (and ongoing maintenance) |
 | `krista-mcp-enable` | Bulk-enable MCP (`tool = true`) across many extension release branches. | optional / fleet-wide |
 
@@ -38,6 +39,7 @@ krista-extension-builder  (runbook: gather spec → skeleton → auth → areas 
         ├─ Phase 3D   → adding-krista-msauth-tabs       (Microsoft products)
         ├─ Phase 5a   → entity-search-implementation    (entity search)
         ├─ Phase 5c   → solution-sdk-integration         (Solutions tab)
+        ├─ Phase 7    → krista-extension-testing          (pure-Java unit tests)
         ├─ Phase 6    → krista-extension-doc-writer      (author docs)
         └─ Phase 7    → krista-extension-docs            (audit docs)   +  krista-mcp-enable (MCP)
 ```

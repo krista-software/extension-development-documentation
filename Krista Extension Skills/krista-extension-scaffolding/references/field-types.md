@@ -11,7 +11,7 @@ forms below are copied verbatim from shipping extensions.
 | `@Field.Text(name=, required=, isSecured=, description=, attributes={}, options={})` | `String` | `isSecured=true` for secrets; on the extension class use `value=` for the key |
 | `@Field.Boolean(name=, required=, ...)` | `Boolean`/`boolean` | |
 | `@Field.Date(name=, required=, includeTimeOfDay=, allowPast=, allowToday=, allowFuture=, ...)` | `Long` (epoch millis) | |
-| `@Field.File(name=, multipleFileUpload=, required=, ...)` | `app.krista.model.base.File` | |
+| `@Field.File(name=, multipleFileUpload=, required=, ...)` | `app.krista.model.base.File` | to read/write the bytes use `KristaMediaClient`/`FileRepository` — see business-logic `file-handling.md` |
 | `@Field.PickOne(name=, values={"A","B"}, required=, ...)` | `String` | fixed dropdown |
 | `@Field.Desc(name=, type="<TYPE-STRING>", required=, description=)` | matches the type string (see below) | composite / entity / list carrier |
 | `@Field(name=, type="<TYPE-STRING>", required=, attributes={}, options={})` | matches the type string | generic form for scalar type strings |
@@ -40,6 +40,32 @@ space after the colon.
 The name inside `Entity(...)` is the **`@Entity` display name** — spaces allowed, e.g.
 `"[ Entity(Company Ticket Analysis By Status) ]"`.
 
+### Entity vs FreeForm — choosing the OUTPUT type (important)
+
+When a request returns a domain object, the output type is **`Entity(<Name>)`** (or `[ Entity(<Name>) ]`
+for a list) — you define an `@Entity` class and map the API JSON to it with a transformer. This is the
+default and the requirement whenever the object has any stable shape.
+
+**Do NOT use `FreeForm` as the response type.** `FreeForm` (`app.krista.model.base.FreeForm`) is only for
+genuinely unstructured / caller-defined data — an arbitrary custom-field bag, or `WAIT_FOR_EVENT`
+`eventData`. Returning the raw vendor payload as a `FreeForm`/opaque `Map` to avoid building an entity is
+a defect: the request then exposes **no fields** in Krista and can't be composed downstream. Decision:
+
+| The response is… | Output type |
+|---|---|
+| a domain object with a known shape (job, ticket, release, user…) | `Entity(<Name>)` + an `@Entity` class + transformer |
+| a list of such objects | `[ Entity(<Name>) ]` (+ a `Count` `Number`) |
+| a small ad-hoc result (success flag, id, message) | scalar `@Field.Boolean` / `@Field.Text` |
+| truly unstructured / caller-defined / dynamic keys | `FreeForm` — last resort only |
+
+**A request can declare several output fields — an entity PLUS scalars.** The output is not
+entity-only: alongside `@Field.Desc(type="Entity(X)")` you add scalar metadata fields as needed —
+`@Field.Text`, `@Field(type="Number")`, `@Field.Boolean`, `@Field.Date`. Real examples:
+`[ Entity(Company) ]` + `Count`(Number); `Entity(Job)` + `Is Complete`(Boolean) + `Completed On`(Date)
++ `Status`(Text); or, for a write, `Success`(Boolean) + `Id`(Text) + `Error Message`(Text). Put each on
+its own line above the method signature; populate them all in the response `Map`. See
+`templates/CatalogRequest.snippets.java` snippet **1b**.
+
 ## `@Attribute` decorations (inside `attributes = { ... }`)
 
 - `@Attribute(name = "visualWidth", value = "S" | "M" | "L" | "XL")` — UI column width.
@@ -53,7 +79,7 @@ Empty decoration is `attributes = {}`. Always pair with `options = {}` (observed
 
 - **Connection fields** (extension class): repeated `@Field.Text(value = KEY, ...)` / `@Field.PickOne` / `@Field.Boolean`. Use `value=` (the attribute key constant), plus `isSecured`/`required`.
 - **Catalog-request inputs** (method parameters): one `@Field.*` per parameter, using `name=`.
-- **Catalog-request outputs** (method-level, above the signature): `@Field.Desc(...)` for composite/entity outputs, or typed `@Field.Text/.Boolean/.File` / generic `@Field(type="Number"|"FreeForm")` for scalar outputs. A request may declare several output fields.
+- **Catalog-request outputs** (method-level, above the signature): `@Field.Desc(type="Entity(X)" | "[ Entity(X) ]")` for domain objects (the default — build the `@Entity`), or typed `@Field.Text/.Boolean/.File` / `@Field(type="Number")` for small scalar results. `FreeForm` output only for truly unstructured data — see "Entity vs FreeForm" above. A request may declare several output fields.
 - **Entity fields**: `@Searchable`/`@ToString` markers + a `@Field.*`.
 
 ## Worked examples (verbatim)
