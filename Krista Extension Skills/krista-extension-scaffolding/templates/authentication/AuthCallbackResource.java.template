@@ -1,0 +1,42 @@
+package {{PACKAGE}}.api;
+
+import app.krista.extensions.util.EventHandler;
+import app.krista.ksdk.authentication.AuthorizationListener;
+
+import javax.inject.Inject;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+/**
+ * OAuth2 callback resource (Pattern C). Register it in your JAX-RS Application's getClasses().
+ * Full route: rest/<jaxrsId>/<ApplicationPath>/callback.
+ *
+ * On callback: exchange `code` for tokens (ScribeJava OAuth20Service.getAccessToken(code)), persist
+ * the refresh token in a @Service RefreshTokenStore (wraps KeyValueStore), then call
+ * authorizationListener.authorized(). `state` carries userId (and optional authContextId).
+ */
+@Path("/")
+public final class {{CALLBACK_RESOURCE_CLASS}} {
+
+    private final AuthorizationListener authorizationListener;
+    private final EventHandler eventHandler;
+    // + RefreshTokenStore, the transient attribute store, and the token/service factory
+
+    @Inject
+    public {{CALLBACK_RESOURCE_CLASS}}(AuthorizationListener authorizationListener, EventHandler eventHandler) {
+        this.authorizationListener = authorizationListener;
+        this.eventHandler = eventHandler;
+    }
+
+    @GET
+    @Path("/callback")
+    @Produces(MediaType.TEXT_HTML)
+    public Response callback(@QueryParam("code") String code, @QueryParam("state") String state) {
+        // TODO: business logic — exchange code, persist refresh token, authorizationListener.authorized(...)
+        return Response.ok("Authorization complete. You may close this window.").build();
+    }
+}

@@ -1,0 +1,77 @@
+package {{PACKAGE}};
+
+import app.krista.extension.authorization.MustAuthenticateException;
+import app.krista.extension.authorization.MustAuthorizeException;
+import app.krista.extension.authorization.RequestAuthenticator;
+import app.krista.extension.request.ProtoRequest;
+import app.krista.extension.request.ProtoResponse;
+import app.krista.model.field.NamedField;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * Simple PAT / API-key request authenticator (github pattern) — NO OAuth flow.
+ *
+ * Use when the admin pastes a pre-issued token/PAT. The invoker itself is the authenticated account.
+ * Returned from @InvokerRequest(InvokerRequest.Type.AUTHENTICATOR) on the extension class. This is far
+ * simpler than the OAuth2 RequestAuthenticator.java.template — prefer it for token/API-key systems.
+ */
+public class {{AUTH_CLASS}} implements RequestAuthenticator {
+
+    private final {{ATTR_STORE_CLASS}} attributeStore;
+    private final String invokerId;
+
+    public {{AUTH_CLASS}}({{ATTR_STORE_CLASS}} attributeStore, String invokerId) {
+        this.attributeStore = attributeStore;
+        this.invokerId = invokerId;
+    }
+
+    @Override
+    public String getScheme() {
+        return "PAT";
+    }
+
+    @Override
+    public Set<String> getSupportedProtocols() {
+        return Set.of("http");
+    }
+
+    @Override
+    public String getAuthenticatedAccountId(ProtoRequest request) {
+        // Token-based: the invoker is the authenticated account.
+        return invokerId;
+    }
+
+    @Override
+    public boolean setServiceAuthorization(String authorization) {
+        return false;
+    }
+
+    @Override
+    public Map<String, NamedField> getAttributeFields() {
+        return Collections.emptyMap();
+    }
+
+    @Override
+    public ProtoResponse getMustAuthenticateResponse(MustAuthenticateException exception, ProtoRequest request) {
+        return null;
+    }
+
+    @Override
+    public AuthorizationResponse getMustAuthenticateResponse(MustAuthenticateException exception) {
+        return new AuthorizationResponse(null, List.of());
+    }
+
+    @Override
+    public ProtoResponse getMustAuthorizeResponse(MustAuthorizeException exception, ProtoRequest request) {
+        return null;
+    }
+
+    @Override
+    public AuthorizationResponse getMustAuthorizeResponse(MustAuthorizeException exception) {
+        return new AuthorizationResponse(null, List.of());
+    }
+}

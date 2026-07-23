@@ -1,0 +1,14 @@
+# Step 4 — src/main/resources/config.properties : where packaged solutions are fetched from.
+# Provider: github | artifactory
+solutions.provider=github
+
+# --- GitHub provider ---
+solutions.github.owner={{GITHUB_OWNER}}          # e.g. krista-software
+solutions.github.repo={{GITHUB_REPO}}            # e.g. krista-packaged-solutions
+solutions.github.ref=main
+solutions.github.token=                          # blank for public repos; PAT for private
+
+# --- Artifactory provider (used when solutions.provider=artifactory) ---
+solutions.artifactory.baseUrl=https://packages.cicd.in.antbrains.com/artifactory
+solutions.artifactory.repoName=libs-release
+solutions.artifactory.path=com/krista/packaged/solutions

@@ -1,0 +1,89 @@
+package {{PACKAGE}}.authentication;
+
+import app.krista.extension.authorization.MustAuthenticateException;
+import app.krista.extension.authorization.MustAuthorizeException;
+import app.krista.extension.authorization.RequestAuthenticator;
+import app.krista.extension.request.ProtoRequest;
+import app.krista.extension.request.ProtoResponse;
+import app.krista.model.field.NamedField;
+
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * Interactive OAuth2 request authenticator (Pattern C).
+ *
+ * Returned from @InvokerRequest(InvokerRequest.Type.AUTHENTICATOR) on the extension class. Implements
+ * the RequestAuthenticator contract. The two key methods:
+ *  - getMustAuthorizeResponse(MustAuthorizeException): read userId (+ optional authContextId) from
+ *    cause.getDetails() (NamedValuedField), build the authorize URL (ScribeJava OAuth20Service),
+ *    return new AuthorizationResponse(authorizeUrl, List.of()).
+ *  - getAuthenticatedAccountId(ProtoRequest): cast to HttpRequest, match the callback path, parse the
+ *    `state` query param → account id.
+ *
+ * NOTE: never convert a MustAuthorizeException/MustAuthenticateException into a normal error — rethrow
+ * it so the platform can drive the re-authorization flow.
+ */
+public class {{AUTH_CLASS}} implements RequestAuthenticator {
+
+    private final {{ATTRS_CLASS}} attributes;
+    // + a transient attribute store and/or refresh-token store as needed
+
+    public {{AUTH_CLASS}}({{ATTRS_CLASS}} attributes) {
+        this.attributes = attributes;
+    }
+
+    @Override
+    public String getScheme() {
+        return "OAuth2";
+    }
+
+    @Override
+    public Set<String> getSupportedProtocols() {
+        // TODO: business logic — e.g. Set.of("https")
+        return Set.of();
+    }
+
+    @Override
+    public String getAuthenticatedAccountId(ProtoRequest protoRequest) {
+        // TODO: business logic — match callback path, parse `state`, return account id.
+        return null;
+    }
+
+    @Override
+    public boolean setServiceAuthorization(String s) {
+        return false;
+    }
+
+    @Override
+    public Map<String, NamedField> getAttributeFields() {
+        // TODO: business logic
+        return Map.of();
+    }
+
+    @Override
+    public ProtoResponse getMustAuthenticateResponse(MustAuthenticateException cause, ProtoRequest request) {
+        // TODO: business logic
+        return null;
+    }
+
+    @Override
+    public AuthorizationResponse getMustAuthenticateResponse(MustAuthenticateException cause) {
+        // TODO: business logic
+        return null;
+    }
+
+    @Override
+    public ProtoResponse getMustAuthorizeResponse(MustAuthorizeException cause, ProtoRequest request) {
+        // TODO: business logic
+        return null;
+    }
+
+    @Override
+    public AuthorizationResponse getMustAuthorizeResponse(MustAuthorizeException cause) {
+        // Read userId/authContextId from cause.getDetails(); build authorize URL; then:
+        // return new AuthorizationResponse(oauthService.getAuthorizationUrl(state), java.util.List.of());
+        // TODO: business logic
+        return null;
+    }
+}

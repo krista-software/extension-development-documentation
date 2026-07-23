@@ -1,0 +1,68 @@
+package {{PACKAGE}}.integration;
+
+import {{PACKAGE}}.{{ATTRS_CLASS}};
+import app.krista.extensions.util.KeyValueStore;
+import com.google.gson.Gson;
+import org.jvnet.hk2.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * Persists {{ATTRS_CLASS}} as JSON in the platform KeyValueStore (github/salesforce/servicenow pattern).
+ *
+ * Two uses:
+ *  - save(attrs, invokerId) / load(invokerId): the permanent per-invoker config.
+ *  - save(attrs) -> temporary "authContextId_<uuid>" key: carries config through a browser OAuth
+ *    round-trip during validate-before-save; the caller removes the key in a finally block.
+ *
+ * KeyValueStore handles encryption at rest — do not add your own encryption layer.
+ */
+@Service
+public class {{ATTR_STORE_CLASS}} {
+
+    private static final Logger LOG = LoggerFactory.getLogger({{ATTR_STORE_CLASS}}.class);
+    private static final Gson GSON = new Gson();
+
+    private final KeyValueStore keyValueStore;
+
+    @Inject
+    public {{ATTR_STORE_CLASS}}(KeyValueStore keyValueStore) {
+        this.keyValueStore = keyValueStore;
+    }
+
+    /** Permanent: keyed by invoker id. */
+    public void save({{ATTRS_CLASS}} attributes, String invokerId) {
+        keyValueStore.put(invokerId, GSON.toJson(attributes.toMap()));
+        LOG.info("Saved attributes for invoker {}", invokerId);
+    }
+
+    /** Transient: random authContextId key (remove in a finally block). */
+    public String save({{ATTRS_CLASS}} attributes) {
+        String key = "authContextId_" + UUID.randomUUID();
+        keyValueStore.put(key, GSON.toJson(attributes.toMap()));
+        return key;
+    }
+
+    @SuppressWarnings("unchecked")
+    public {{ATTRS_CLASS}} load(String key) {
+        Object stored = keyValueStore.get(key);
+        if (stored == null) {
+            return null;
+        }
+        try {
+            Map<String, Object> map = GSON.fromJson(String.valueOf(stored), Map.class);
+            return {{ATTRS_CLASS}}.create(map);
+        } catch (Exception e) {
+            LOG.error("Failed to deserialize attributes for key {}", key, e);
+            return null;
+        }
+    }
+
+    public void remove(String key) {
+        keyValueStore.remove(key);
+    }
+}

@@ -1,0 +1,4 @@
+// Step 1 — add to the extension's build.gradle dependencies { } block.
+dependencies {
+    implementation 'com.krista.extension:solution-sdk:1.0.0'
+}

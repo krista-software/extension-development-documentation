@@ -1,0 +1,20 @@
+# Release notes
+
+## {{EXT_VERSION}}
+
+Initial release.
+
+### New Features
+- ...
+
+### Resolved Bugs
+Not Available.
+
+### Dependency Updates
+- Krista Service APIs (Java): {{KRISTA_APIS_VERSION}}
+
+### Known Issues
+Not Available.
+
+### Limitations
+Not Available.

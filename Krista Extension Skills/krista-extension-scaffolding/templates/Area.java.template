@@ -1,0 +1,57 @@
+package {{PACKAGE}}.catalog;
+
+import app.krista.extension.executor.ExtensionResponse;
+import app.krista.extension.executor.ExtensionResponseBuilder;
+import app.krista.extension.impl.anno.Attribute;
+import app.krista.extension.impl.anno.CatalogRequest;
+import app.krista.extension.impl.anno.Domain;
+import app.krista.extension.impl.anno.Field;
+// import app.krista.model.base.FreeForm;   // if you use FreeForm inputs/outputs
+// import java.util.List;                    // if you return List<Entity> or take list inputs
+
+import javax.inject.Inject;
+import java.util.Map;
+
+/**
+ * {{AREA_NAME}} catalog requests.
+ *
+ * The @Domain identity is shared by every Area and @Entity in this extension (only ecosystemVersion
+ * varies per file). Replace the placeholder ids with the Krista-registered values for your domain.
+ */
+@Domain(id = "{{DOMAIN_ID}}",
+        name = "{{DOMAIN_NAME}}",
+        ecosystemId = "{{ECOSYSTEM_ID}}",
+        ecosystemName = "{{ECOSYSTEM_NAME}}",
+        ecosystemVersion = "{{ECOSYSTEM_VERSION}}")
+public class {{AREA_CLASS}} {
+
+    private final {{SERVICE_CLASS}} service;
+
+    @Inject
+    public {{AREA_CLASS}}({{SERVICE_CLASS}} service) {
+        this.service = service;
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Example QUERY_SYSTEM request: typed text input, entity-list + count output.
+    // Copy shapes from CatalogRequest.snippets.java for other input/output types.
+    // ---------------------------------------------------------------------------------------------
+    @CatalogRequest(
+            id = "{{REQUEST_ID}}",                 // localDomainRequest_<uuid> — unique per request
+            name = "{{REQUEST_NAME}}",
+            description = "{{REQUEST_DESCRIPTION}}",
+            area = "{{AREA_LABEL}}",
+            type = CatalogRequest.Type.QUERY_SYSTEM)
+    @Field.Desc(name = "Results", type = "[ Entity({{ENTITY_NAME}}) ]", required = false)
+    @Field(name = "Count", type = "Number", required = false,
+            attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {})
+    public ExtensionResponse {{REQUEST_METHOD}}(
+            @Field.Text(name = "Search Term", required = true,
+                    attributes = {@Attribute(name = "visualWidth", value = "M")}, options = {}) String searchTerm) {
+        // TODO: business logic — call service, map results.
+        Map<String, Object> responseValue = new java.util.LinkedHashMap<>();
+        // responseValue.put("Results", ...); responseValue.put("Count", ...);
+        return new ExtensionResponseBuilder().success(responseValue).build();
+        // On failure: return new ExtensionResponseBuilder().failure("message").build();
+    }
+}

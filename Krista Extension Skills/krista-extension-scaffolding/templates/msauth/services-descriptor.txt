@@ -1,0 +1,6 @@
+# Save as (NO .txt extension):
+#   src/main/resources/META-INF/services/app.krista.sdk.msauth.extension.registry.MsAuthExtensionDescriptor
+#
+# File contents = the fully-qualified name of your descriptor class, one line:
+
+{{PACKAGE}}.{{DESCRIPTOR_CLASS}}

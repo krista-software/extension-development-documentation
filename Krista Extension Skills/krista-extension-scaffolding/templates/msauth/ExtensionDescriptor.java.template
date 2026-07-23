@@ -1,0 +1,16 @@
+package {{PACKAGE}};
+
+import app.krista.sdk.msauth.extension.registry.MsAuthExtensionDescriptor;
+
+/**
+ * ServiceLoader descriptor that points the microsoft-auth-sdk at this extension's AuthConfig.
+ * Register the fully-qualified class name in:
+ *   src/main/resources/META-INF/services/app.krista.sdk.msauth.extension.registry.MsAuthExtensionDescriptor
+ * (see services-descriptor.txt).
+ */
+public class {{DESCRIPTOR_CLASS}} implements MsAuthExtensionDescriptor {
+    @Override
+    public Class<?> getConfigClass() {
+        return {{AUTH_CONFIG_CLASS}}.class;
+    }
+}

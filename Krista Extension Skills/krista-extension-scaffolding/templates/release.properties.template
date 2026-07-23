@@ -1,0 +1,6 @@
+# GENERATED at build time by the generateReleaseProperties task — do not hand-edit.
+# Committing a copy is optional; the values are scraped from the @Extension and @Domain annotations.
+ecosystem.name={{ECOSYSTEM_NAME}}
+domain.name={{DOMAIN_NAME}}
+extension.version={{EXT_VERSION}}
+extension.name={{EXT_NAME}}

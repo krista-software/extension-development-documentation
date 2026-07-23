@@ -1,0 +1,21 @@
+# Authentication
+
+{{EXT_NAME}} authenticates with {{AUTH_MECHANISM}} ({{e.g. "a Personal Access Token", "OAuth 2.0
+authorization code", "OAuth 2.0 client credentials"}}).
+
+## Obtaining credentials
+
+1. {{Step — where in the provider to create the app / token}}.
+2. {{Step — required scopes/permissions, listed explicitly}}.
+3. {{Step — copy the value into the Setup-tab field}}.
+
+## Required scopes / permissions
+
+| Scope / Permission | Why it's needed |
+|---|---|
+| {{scope}} | {{which requests use it}} |
+
+## Verifying
+
+Run **Test Connection** in the Setup area. A successful result confirms the credentials and
+connectivity; a failure returns an actionable message (e.g. token missing, 401 unauthorized).
