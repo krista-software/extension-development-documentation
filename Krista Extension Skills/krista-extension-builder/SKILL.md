@@ -26,6 +26,29 @@ build-and-release, custom-tabs, verify) before building. Deterministic placehold
 
 ---
 
+## ⛔ Completeness contract — DO NOT SKIP (read before building, verify at the end)
+
+The most common failure is silently doing less than the spec: mapping only some endpoints, skipping
+`@Entity` classes, leaving `// TODO` bodies, or skipping docs/tests/jar. **This is prohibited.**
+
+- **Cover every endpoint.** Every operation in the Phase-0 inventory becomes a `@CatalogRequest`. If
+  you deliberately build a subset, you MUST say so explicitly and list exactly what's deferred — never
+  silently drop endpoints or stop early.
+- **Every domain object → an `@Entity` + transformer + typed `Entity(X)` output.** No raw
+  FreeForm/`Map` passthrough (see Phase 4).
+- **Every request has typed `@Field` inputs and a typed output.** No bare `Map` parameter.
+- **Fill every `// TODO`.** Ship real business logic (Phase 4 / business-logic skill), not stub bodies.
+- **No phase silently omitted.** A phase is skipped only when Phase 0 shows it does not apply, and you
+  state *why* it was skipped. Auth (Phase 3), docs (Phase 6), and the jar (Phase 7) are never optional.
+- **Write the pure-Java tests** (testing skill) — don't ship untested logic.
+- **No silent truncation.** If anything is partial, incomplete, or assumed, surface it in the Phase-7
+  report — don't present a partial build as complete.
+
+Phase 7 ends with a **self-audit against the Phase-0 inventory** that proves none of the above was
+skipped. If the audit finds a gap, either fix it or report it explicitly — do not declare done.
+
+---
+
 ## Phase 0 — Gather the spec (do this first, always)
 
 Determine the items below. **If the user's prompt or attachments already answer one, use that and do
@@ -96,6 +119,23 @@ Always add `SetupArea.java.template` (Test Connection + Health Check). Then one 
 `field-types.md`). Set `tool = true` on requests that should be agent-callable. For large uniform
 APIs, generate the Areas programmatically from the collection (as done for ServiceTrade).
 
+> ### ⛔ MANDATORY: model the response as an Entity — do NOT dump the raw response as FreeForm
+> This is the #1 shortcut to avoid. For **every** request that returns a domain object (a job, ticket,
+> release, contact, …) or a list of them, you MUST:
+> 1. **Define an `@Entity` class** for that object (`entity/Entity.java.template`) — public fields with
+>    `@Field.*`, `@Searchable`/`@ToString`, a `toFields()` — one per distinct object the API returns.
+> 2. **Declare the output as the entity**: `@Field.Desc(name="…", type="Entity(<Name>)")` for one, or
+>    `type="[ Entity(<Name>) ]"` for a list — plus a `Count`/metadata field where useful.
+> 3. **Map the API JSON to the entity with a transformer** (business-logic `Transformer.java`), then
+>    return it in the `ExtensionResponse`.
+>
+> **`FreeForm` is NOT the response type.** Use `FreeForm` only for genuinely unstructured / caller-defined
+> data (arbitrary custom-field bags, opaque event payloads) or `WAIT_FOR_EVENT` `eventData` — never as
+> the default "the API response," and never as a reason to skip building entities. A catalog request
+> whose output is a raw `FreeForm`/`Map` of the vendor payload is a defect: it shows no fields in Krista
+> and can't be composed in workflows. If in doubt, build the entity. Entities are required whenever the
+> object is also searchable (`supportStore=true` → Phase 5a).
+
 Then **fill each request's `// TODO` body to production standard — load the
 `krista-extension-business-logic` skill**: the HTTP client + interceptors (auth/retry/rate-limit),
 DTO→entity transformers, input validation, the centralized error→exception mapping, the audited
@@ -138,10 +178,21 @@ exact mechanism:
    compile to prove the sources are green, and say plainly that the descriptor/jar step needs the
    Artifactory.
 
-Then run the **krista-extension-docs** skill's `scripts/audit_docs.py` and **report**: extension
-name+version, package, auth pattern, request count by area, capabilities enabled, the **jar path** (or
-why it couldn't be produced), and any FLAGGED placeholders (esp. the `@Domain`/`ecosystem` ids) the
-developer must replace before the extension binds in-platform.
+**Self-audit against the Phase-0 inventory FIRST (the anti-skip gate).** Before reporting, prove
+nothing was skipped — walk the completeness contract:
+- endpoints in the spec **vs** `@CatalogRequest` methods written → count both; they must match (or
+  every deferral is listed);
+- every domain object has an `@Entity` + transformer + typed `Entity(X)` output (grep for
+  `type = "FreeForm"` outputs → each must be justified as genuinely unstructured);
+- no `@CatalogRequest` takes a bare `Map` / returns a raw payload;
+- **no `// TODO` left** in shipped code (`grep -rn "// TODO"` → must be empty or explicitly flagged);
+- auth (Phase 3), docs (Phase 6), tests, and the jar all exist.
+
+Then run the **krista-extension-docs** skill's `scripts/audit_docs.py` and **report** a coverage line:
+extension name+version, package, auth pattern, **endpoints covered = N of M** (list any deferred),
+entities created, capabilities enabled, tests written, the **jar path** (or why it couldn't be
+produced), and any FLAGGED placeholders (esp. the `@Domain`/`ecosystem` ids). **If the audit finds a
+gap, fix it or state it — never present a partial build as complete.**
 
 > Scope: Phase 7 stops at the **jar**. Binding the domain, deploying to a Krista appliance, and
 > publishing into `krista-global-catalog` are out of scope — they need Krista's registered IDs and
@@ -159,12 +210,24 @@ developer must replace before the extension binds in-platform.
 | 5a (entity search) | `entity-search-implementation` |
 | 5c (Solutions tab) | `solution-sdk-integration` |
 | 6 (docs authoring) | `krista-extension-doc-writer` |
+| 7 (pure-Java unit tests) | `krista-extension-testing` |
 | 7 (docs audit) | `krista-extension-docs` (`scripts/audit_docs.py`) |
 | MCP bulk-enable across branches | `krista-mcp-enable` |
+
+## The kit is self-contained
+The templates and references already encode the patterns extracted from the shipping extensions, so
+you do NOT need repo access at build time — build straight from the kit. If you genuinely hit a shape
+none of the templates cover, use the closest template, adapt it to the conventions in
+`annotations-cheatsheet.md` / `field-types.md`, and **flag the gap** for the developer — never invent
+an unverified annotation. (Filling such gaps by adding a new template to the kit is a maintenance task,
+not a build-time one.)
 
 ## Non-negotiables (carried from the real code)
 - Java 21 everywhere; `krista-apis` and `extension-impl-anno-processors` pinned to the SAME version.
 - Every catalog request declares typed `@Field` inputs and a typed output; returns `ExtensionResponse`.
+- **Output = an `@Entity` for domain objects, PLUS scalar fields as needed** (`@Field.Text`,
+  `@Field(type="Number")`, `@Field.Boolean`, `@Field.Date`) for count/status/message/timestamp — a
+  request may declare several output fields. Never a raw-FreeForm passthrough of the vendor payload.
 - DI is HK2 (`@Service` + `@Inject`); JAX-RS is `javax.ws.rs.*` (not jakarta).
 - `@Domain` ids are platform-registered — placeholders compile but must be replaced before binding.
 - Never hand-roll Microsoft OAuth — use pattern D.

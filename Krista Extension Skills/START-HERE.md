@@ -32,6 +32,9 @@ process.
 - Read, in order: `README.md` (the index), `krista-extension-builder/SKILL.md` (the authoritative
   runbook), and `krista-extension-builder/references/placeholders.md`. **`krista-extension-builder` is
   the process — run its Phase 0→7.** Load the sub-skills it names, when it names them.
+- **Obey the builder's "Completeness contract — DO NOT SKIP."** Cover every endpoint; build an
+  `@Entity` (typed output) for every domain object; fill every `// TODO`; never skip auth/docs/tests/
+  jar; never silently do a subset. If anything is partial, say so explicitly in the Step-5 report.
 
 ### Step 1 — Analyze `resources/` (do this before asking anything)
 Detect and parse whatever is present — do not require a specific format:
@@ -58,6 +61,10 @@ Do not ask what `resources/` already answers.
 Execute the runbook, pulling the sub-skills it directs:
 - **Structure** → `krista-extension-scaffolding` (build.gradle, extension/attributes/area/catalog
   requests with **typed `@Field` inputs + typed output**, SetupArea, entities, resources, docs stubs).
+  - **Build `@Entity` classes for the domain objects — do NOT skip them.** Every request that returns
+    an object (or list) declares its output as `Entity(<Name>)` / `[ Entity(<Name>) ]` and maps the
+    JSON via a transformer. Returning the raw API payload as a `FreeForm`/`Map` is a defect (no fields
+    in Krista). `FreeForm` is only for genuinely unstructured data. See scaffolding `field-types.md`.
 - **Production business logic** (fill every `// TODO`) → `krista-extension-business-logic` (HTTP client
   + interceptors, transformers/DTOs, validation, error→exception mapping, the audited
   try/catch→`ExtensionResponse`, telemetry, secret handling). Use its `production-checklist.md`.
@@ -66,8 +73,9 @@ Execute the runbook, pulling the sub-skills it directs:
   (Microsoft products).
 - **Docs** → `krista-extension-doc-writer` (author the Documentation tab from the code).
 Honor the non-negotiables: Java 21; `krista-apis` == `extension-impl-anno-processors` version; HK2 DI
-(`@Service`/`@Inject`); JAX-RS `javax.ws.rs.*`; request/entity IDs random-with-prefix +
-stable; **domain/ecosystem IDs real-registered-or-flagged**; never log secrets.
+(`@Service`/`@Inject`); JAX-RS `javax.ws.rs.*`; **domain objects modeled as `@Entity` with typed
+outputs (no raw-FreeForm passthrough)**; request/entity IDs random-with-prefix + stable;
+**domain/ecosystem IDs real-registered-or-flagged**; never log secrets.
 
 ### Step 4 — Compile & generate the jar (builder Phase 7 — YOUR final action)
 After everything is written, **you compile and produce the jar** (don't hand the user commands):

@@ -11,6 +11,13 @@ description: Use when implementing, extending, reviewing, or migrating KME Entit
 
 **Canonical reference:** `ENTITY_SEARCH_IMPLEMENTATION_SKILL.md` at the repo root (read the relevant section before each phase; it contains the full architecture, templates, and sequence diagrams). Reference implementation: `salesforce_sales`.
 
+> **Scope: the store implements the FULL `EntityStore<E>` contract — CRUD *and* search.** `search` is the
+> deepest part (the 12-step template below), but `create` / `get` / `update` / `delete` are first-class,
+> not optional. For the step-by-step CRUD pattern (guards, DAO delegation, re-fetch on create/update,
+> delete-fails-loud, error/return policy, testing with a mocked DAO) see
+> **`references/entitystore-crud.md`**. The scaffolding `entity/EntityStore.java.template` ships those
+> CRUD bodies filled to the reference shape.
+
 ## Non-negotiable architecture rules
 
 1. **The store IS the search implementation.** One HK2 `@Service` class per searchable entity implementing `app.krista.extension.util.EntityStore<E>`. NEVER create `EntityRequests`, `ServiceRegistry`, `EntityImplementationService`, or per-entity "search provider"/"condition translator" classes — HK2 `@Service` is the registration mechanism.

@@ -23,6 +23,7 @@ Distilled from github + autotask. Treat as go/no-go before a PR.
 - [ ] Responses use stable keys; CHANGE_SYSTEM uses the `Success` envelope.
 
 ## Transform / validate
+- [ ] Every domain-object response is an `@Entity` with a typed `Entity(X)` / `[ Entity(X) ]` output — NOT a raw FreeForm/Map passthrough.
 - [ ] Transformers stateless/static; null-in→null-out; `transformList` never null.
 - [ ] All JSON reads via null-safe accessors; IDs→String; timestamps→epoch-millis.
 - [ ] Fail-fast validation with field+reason+example; validate before external calls.

@@ -2,9 +2,18 @@
 // Every request: unique id (localDomainRequest_<uuid>), typed @Field inputs (parameters),
 // typed @Field output(s) (method-level), return ExtensionResponse (or List<Entity>/Map/File).
 // Verbatim shapes from autotask, connect-wise, jira, restapi, salesforce, slack.
+//
+// ============================ OUTPUT RULE — READ FIRST ============================
+// If the request returns a domain object (or a list), the output is an ENTITY: define an @Entity
+// class and use @Field.Desc(type="Entity(X)") / "[ Entity(X) ]", mapping the JSON with a transformer.
+// This is the DEFAULT — snippet #1 is the model to copy for most read/create/update requests.
+// Do NOT skip entities and return the raw vendor payload as a FreeForm/Map — that shows no fields
+// in Krista and is a defect. FreeForm (snippets #3/#4/#6) is ONLY for truly unstructured / caller-
+// defined data (custom-field bags, event payloads), never as "the response."
+// =================================================================================
 
 // ============================================================================================
-// 1) QUERY_SYSTEM — read; entity-list output + count; text inputs
+// 1) QUERY_SYSTEM — read; entity-list output + count; text inputs   << DEFAULT SHAPE — copy this
 // ============================================================================================
 @CatalogRequest(
         id = "localDomainRequest_<uuid>",
@@ -19,6 +28,32 @@ public ExtensionResponse searchCompanies(
         @Field.Text(name = "Search Type", required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String searchType) {
     // TODO: business logic
     return new ExtensionResponseBuilder().success(new java.util.LinkedHashMap<>()).build();
+}
+
+// ============================================================================================
+// 1b) OUTPUT = an Entity PLUS scalar fields. A request declares as many method-level output fields
+//     as it needs — an Entity(X) / [ Entity(X) ] for the domain object(s) AND scalars for metadata.
+//     Scalar output field types: @Field.Text · @Field(type="Number") · @Field.Boolean · @Field.Date.
+//     (Verbatim shapes from autotask: searchCompanies = [Entity]+Count; updateContact = Boolean+Text.)
+// ============================================================================================
+@CatalogRequest(
+        id = "localDomainRequest_<uuid>",
+        name = "Get Job",
+        description = "Fetch a job with a completion summary",
+        area = "Job",
+        type = CatalogRequest.Type.QUERY_SYSTEM, tool = true)
+@Field.Desc(name = "Job", type = "Entity(Job)", required = false)                                                   // the entity
+@Field.Boolean(name = "Is Complete", required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) // Boolean
+@Field(name = "Line Item Count", type = "Number", required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) // Number
+@Field.Date(name = "Completed On", required = false, attributes = {@Attribute(name = "visualWidth", value = "M")}, options = {})    // Date (Long epoch)
+@Field.Text(name = "Status", required = false, attributes = {@Attribute(name = "visualWidth", value = "M")}, options = {})          // Text
+public ExtensionResponse getJob(
+        @Field.Text(name = "Job ID", required = true, attributes = {@Attribute(name = "visualWidth", value = "M")}, options = {}) String jobId) {
+    // TODO: client.get -> transform to Job entity -> put entity + scalar fields on the response map
+    java.util.Map<String, Object> out = new java.util.LinkedHashMap<>();
+    // out.put("Job", jobEntity); out.put("Is Complete", true); out.put("Line Item Count", 12.0);
+    // out.put("Completed On", epochMillis); out.put("Status", "completed");
+    return new ExtensionResponseBuilder().success(out).build();
 }
 
 // ============================================================================================
@@ -43,7 +78,8 @@ public ExtensionResponse createTicket(
 }
 
 // ============================================================================================
-// 3) CHANGE_SYSTEM — composite (key/value list) inputs; composite output; returns Map
+// 3) CHANGE_SYSTEM — composite/FreeForm passthrough (GENERIC REST extensions only, e.g. a raw
+//    "call any endpoint" tool). For a normal typed API, prefer snippet #1 with an Entity output.
 // ============================================================================================
 @CatalogRequest(
         id = "localDomainRequest_<uuid>",
