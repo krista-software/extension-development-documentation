@@ -54,6 +54,10 @@ answers the name/purpose/scope. Ask only the genuine unknowns, and batch them wi
 | a Microsoft product (Outlook/SharePoint/Teams/OneDrive) | **D** | `msauth/*` + load the **adding-krista-msauth-tabs** skill |
 
 ### CAPABILITY DETECTION (adds optional phases)
+- **Binary files** — any operation uploads or downloads a file (attachment, export, download,
+  `content`, `asset`, `multipart`/`octet-stream`) → the request uses `@Field.File`, and the impl uses
+  **`KristaMediaClient` + `FileRepository`** to bridge `app.krista.model.base.File` ↔ bytes (see
+  `krista-extension-business-logic/references/file-handling.md` + `idioms/KristaMediaClient.java`).
 - **Entity search** — the system has first-class searchable objects Krista should query as entities →
   Phase 5a (load the **entity-search-implementation** skill).
 - **Webhooks / events** — the system pushes notifications the workflow should wait on → Phase 5b.

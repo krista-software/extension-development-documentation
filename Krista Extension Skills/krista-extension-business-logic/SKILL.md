@@ -80,6 +80,7 @@ heavy validation, or client-side filtering. Both are documented in the reference
 | Rich object → Krista entity | transformer + null-safe accessors + type coercions |
 | Many inputs / strict rules | a dedicated `*ValidationService` composed from a `ValidationUtil` toolkit |
 | Large domain, many ops | the decomposed two-tier service layer |
+| **Binary file in/out** (upload, download, attachment, export) | **`KristaMediaClient` + `FileRepository`** — `file-handling.md` |
 
 ## References & idioms
 
@@ -88,6 +89,7 @@ heavy validation, or client-side filtering. Both are documented in the reference
 - `references/errors-and-responses.md` — exception hierarchy, status→exception mapping, the audited wrapper, `ExtensionResponse` building & classification, user-vs-log messages.
 - `references/transform-validate.md` — DTO→entity transformers, null-safe accessors, coercions; the validation toolkit + domain validators.
 - `references/telemetry-logging-security.md` — telemetry lifecycle, structured logging, secret handling, multi-tenant isolation.
+- `references/file-handling.md` — moving binary files via `KristaMediaClient` / `FileRepository` (when a request has a `@Field.File` input or output).
 - `references/testing.md` — mocking the client, unit-testing the pure units, mockwebserver.
 - `references/production-checklist.md` — the combined go/no-go checklist.
-- `idioms/` — real, adaptable code: `HttpClient`, `Interceptors`, `Exceptions`, `Transformer`, `Validation`, `ResponseFactory`, `Telemetry`, `AuditedArea`.
+- `idioms/` — real, adaptable code: `HttpClient`, `Interceptors`, `Exceptions`, `Transformer`, `Validation`, `ResponseFactory`, `Telemetry`, `AuditedArea`, `KristaMediaClient` (binary file upload/download).

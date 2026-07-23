@@ -11,7 +11,7 @@ forms below are copied verbatim from shipping extensions.
 | `@Field.Text(name=, required=, isSecured=, description=, attributes={}, options={})` | `String` | `isSecured=true` for secrets; on the extension class use `value=` for the key |
 | `@Field.Boolean(name=, required=, ...)` | `Boolean`/`boolean` | |
 | `@Field.Date(name=, required=, includeTimeOfDay=, allowPast=, allowToday=, allowFuture=, ...)` | `Long` (epoch millis) | |
-| `@Field.File(name=, multipleFileUpload=, required=, ...)` | `app.krista.model.base.File` | |
+| `@Field.File(name=, multipleFileUpload=, required=, ...)` | `app.krista.model.base.File` | to read/write the bytes use `KristaMediaClient`/`FileRepository` — see business-logic `file-handling.md` |
 | `@Field.PickOne(name=, values={"A","B"}, required=, ...)` | `String` | fixed dropdown |
 | `@Field.Desc(name=, type="<TYPE-STRING>", required=, description=)` | matches the type string (see below) | composite / entity / list carrier |
 | `@Field(name=, type="<TYPE-STRING>", required=, attributes={}, options={})` | matches the type string | generic form for scalar type strings |
