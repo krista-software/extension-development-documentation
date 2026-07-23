@@ -1,0 +1,13 @@
+# {{EXT_NAME}} Extension
+
+Version **{{EXT_VERSION}}**
+
+Krista integration with {{EXT_NAME}}. This page is the home of the in-platform Documentation tab.
+
+## Authentication
+
+Describe how to obtain credentials and what each Setup-tab field is for.
+
+## Requests
+
+See [Supported requests](supported-requests.md).

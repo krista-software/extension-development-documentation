@@ -1,0 +1,35 @@
+// Add to build.gradle for a microsoft-auth-sdk extension (Pattern D).
+// The SDK ships the tab HTML inside its jar; a non-transitive sdkUi configuration + a Copy task
+// extract auth/audit/mcp-setup index.html into build/resources/main.
+
+dependencies {
+    annotationProcessor 'app.krista:extension-impl-anno-processors:1.0.125-sp1'  // >= sp1 for CatalogRequest.tool
+    implementation 'app.krista:krista-apis:1.0.125-sp1'
+    implementation 'app.krista.sdk:microsoft-auth-sdk:1.0.5'
+    implementation 'com.microsoft.graph:microsoft-graph:5.80.0'
+    implementation 'com.microsoft.graph:microsoft-graph-auth:0.3.0'
+    implementation 'com.azure:azure-identity:1.11.2'
+}
+
+configurations {
+    sdkUi { canBeResolved = true; transitive = false }
+}
+dependencies {
+    sdkUi 'app.krista.sdk:microsoft-auth-sdk:1.0.5'
+}
+
+tasks.register('extractSDKResources', Copy) {
+    def sdkJar = configurations.sdkUi.singleFile
+    from(zipTree(sdkJar)) {
+        include 'auth/index.html'
+        include 'audit/index.html'
+        include 'mcp-setup/index.html'   // include only if you expose the AI Assistant tab
+    }
+    into("${project.buildDir}/resources/main")
+    includeEmptyDirs = false
+}
+tasks.named('processResources') { dependsOn(tasks.named('extractSDKResources')) }
+
+// Also on the @Extension class:
+//   @Extension(..., implementationModel = Extension.ImplementationModel.Krista_4_O)
+//   @Containerize(baseImageVersion = "3.6.2-sp3")   // REQUIRED with Krista_4_O

@@ -1,0 +1,77 @@
+package {{PACKAGE}};
+
+import app.krista.extension.executor.Invoker;
+import app.krista.extension.impl.anno.Extension;
+import app.krista.extension.impl.anno.Field;
+import app.krista.extension.impl.anno.InvokerRequest;
+import app.krista.extension.impl.anno.Java;
+import app.krista.extension.impl.anno.StaticResource;
+// Interactive-auth extensions also import:
+// import app.krista.extension.authorization.RequestAuthenticator;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.util.Map;
+
+/**
+ * {{EXT_NAME}} extension entry point.
+ *
+ * Connection fields are declared as class-level @Field.* referencing the key constants in
+ * {{ATTRS_CLASS}}. Lifecycle/Setup-tab behavior is wired through @InvokerRequest methods.
+ */
+@Field.Text(value = {{ATTRS_CLASS}}.CLIENT_ID)
+@Field.Text(value = {{ATTRS_CLASS}}.CLIENT_SECRET, isSecured = true)
+@Field.Text(value = {{ATTRS_CLASS}}.BASE_URL, required = false)
+@Extension(name = "{{EXT_NAME}}", version = "{{EXT_VERSION}}")
+@StaticResource(path = "docs", file = "docs")
+@Java(version = Java.Version.JAVA_21)
+// @ChangeLog(file = "docs/pages/release-notes.md")   // OPTIONAL — surfaces a Release Notes view (import app.krista.extension.impl.anno.ChangeLog)
+// Microsoft-auth-SDK extensions also add: @Containerize(baseImageVersion = "3.6.2-sp3") + implementationModel = Extension.ImplementationModel.Krista_4_O
+public final class {{EXT_CLASS}} {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger({{EXT_CLASS}}.class);
+
+    private final Invoker invoker;
+    private final {{ATTRS_CLASS}} attributes;
+
+    @Inject
+    public {{EXT_CLASS}}(Invoker invoker, {{ATTRS_CLASS}} attributes) {
+        this.invoker = invoker;
+        this.attributes = attributes;
+    }
+
+    /** Setup-tab tabs. See references/custom-tabs.md for Auth/Audit/AI-Assistant tab URLs. */
+    @InvokerRequest(InvokerRequest.Type.CUSTOM_TABS)
+    public Map<String, String> customTabs() {
+        return Map.of("Documentation", "static/docs");
+    }
+
+    /** Validate configuration before it is saved. Throw to reject. */
+    @InvokerRequest(InvokerRequest.Type.VALIDATE_ATTRIBUTES)
+    public void validateAttributes(Map<String, Object> connectionAttributes) throws IOException {
+        {{ATTRS_CLASS}} candidate = {{ATTRS_CLASS}}.create(invoker, connectionAttributes);
+        if (candidate.getClientId().isBlank()) {
+            throw new IllegalArgumentException("Client ID is required.");
+        }
+        // TODO: business logic — optionally call testConnection with the candidate attributes.
+    }
+
+    /** Test-Connection button. Verify connectivity/credentials; throw on failure. */
+    @InvokerRequest(InvokerRequest.Type.TEST_CONNECTION)
+    public void testConnection() throws IOException {
+        // TODO: business logic — make one lightweight authenticated call.
+    }
+
+    /** React to Setup-tab configuration changes. */
+    @InvokerRequest(InvokerRequest.Type.INVOKER_UPDATED)
+    public void attributesUpdated(Map<String, Object> oldAttributes, Map<String, Object> newAttributes) {
+        attributes.update(newAttributes);
+    }
+
+    // --- Interactive OAuth2 only (Pattern C): register the authenticator ---
+    // @InvokerRequest(InvokerRequest.Type.AUTHENTICATOR)
+    // public RequestAuthenticator getRequestAuthenticator() { return requestAuthenticator; }
+}

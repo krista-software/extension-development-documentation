@@ -1,0 +1,14 @@
+# Supported Requests
+
+{{EXT_NAME}} exposes **{{N}} catalog requests** across **{{M}} areas**. Each links to its detailed page.
+
+## {{AREA_1_NAME}}
+| Request | Type | Description |
+|---|---|---|
+| [{{Request A}}]({{RequestAFile}}.md) | {{QUERY_SYSTEM}} | {{one line}} |
+| [{{Request B}}]({{RequestBFile}}.md) | {{CHANGE_SYSTEM}} | {{one line}} |
+
+## {{AREA_2_NAME}}
+| Request | Type | Description |
+|---|---|---|
+| [{{Request C}}]({{RequestCFile}}.md) | {{WAIT_FOR_EVENT}} | {{one line}} |

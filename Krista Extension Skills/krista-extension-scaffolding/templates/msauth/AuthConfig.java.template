@@ -1,0 +1,48 @@
+package {{PACKAGE}};
+
+import app.krista.sdk.msauth.config.AuthFlow;
+import app.krista.sdk.msauth.extension.annotations.AuthScope;
+import app.krista.sdk.msauth.extension.annotations.AuditConfig;
+import app.krista.sdk.msauth.extension.annotations.AuditEvent;
+import app.krista.sdk.msauth.extension.annotations.AuditEventGroup;
+import app.krista.sdk.msauth.extension.annotations.CustomProperty;
+import app.krista.sdk.msauth.extension.annotations.MsAuthExtension;
+import app.krista.sdk.msauth.extension.annotations.PropertyType;
+
+/**
+ * Microsoft-auth-SDK declarative config (Pattern D). This class is intentionally EMPTY — all auth,
+ * scope, audit, and custom-property configuration is expressed as annotations. The SDK ships the
+ * Authentication / Audit / AI-Assistant tab HTML; do not hand-roll OAuth for Microsoft products.
+ *
+ * Register this class via a MsAuthExtensionDescriptor (see ExtensionDescriptor.java.template +
+ * services-descriptor.txt).
+ */
+@MsAuthExtension(
+        extensionType = "{{EXT_TYPE}}",                 // e.g. "outlook", "sharepoint"
+        callbackPathPrefix = "/{{EXT_TYPE}}",           // must align with the authenticator super(...) arg
+        supportedFlows = {AuthFlow.AUTH_CODE_PUBLIC, AuthFlow.AUTH_CODE_PRIVATE, AuthFlow.CLIENT_CREDENTIALS_SECRET},
+        defaultScopes = {"openid", "offline_access", "User.Read" /* + product scopes */},
+        headerTitle = "{{EXT_NAME}} Authentication",
+        headerSubtitle = "Configure how Krista connects to your Microsoft account",
+        showScopePanel = true,
+        supportsOwnCredentials = true,
+        enableAuditDashboard = true,
+        setupGuideUrl = "../../../static/docs/#/pages/Creating{{EXT_NAME}}App"
+)
+@AuthScope(value = "User.Read", description = "Read user profile", required = true,
+        catalogRequests = {"Test Connection", "Health Check"})
+// @AuthScope(value = "Mail.ReadWrite", description = "Read and write mail", required = true, catalogRequests = {...})
+@CustomProperty(key = "schedulerIntervalMinutes", label = "Polling Interval (minutes)",
+        type = PropertyType.NUMBER, defaultValue = "5", section = "{{EXT_NAME}} Settings", order = 1,
+        helpText = "How often to poll.")
+@AuditConfig(
+        dashboardTitle = "{{EXT_NAME}} Audit Dashboard",
+        enableCredentialHealth = true,
+        enableCharts = true,
+        csvExportPrefix = "{{EXT_TYPE}}-audit"
+)
+@AuditEventGroup(name = "Notifications", events = {
+        @AuditEvent(type = "NOTIFICATION_RECEIVED", description = "A notification was received"),
+        @AuditEvent(type = "NOTIFICATION_ERROR", description = "A notification errored")
+})
+public class {{AUTH_CONFIG_CLASS}} { }

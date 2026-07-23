@@ -1,0 +1,88 @@
+    package {{PACKAGE}}.catalog.stores;
+
+import app.krista.extension.executor.SearchCondition;
+import app.krista.extension.executor.SearchQuery;
+import app.krista.extension.util.EntityStore;
+import {{PACKAGE}}.catalog.entities.{{ENTITY_CLASS}};
+import org.jvnet.hk2.annotations.Service;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * EntityStore for {{ENTITY_NAME}} — the entity-search contract for an @Entity(supportStore = true).
+ *
+ * The store IS the search implementation. One @Service class per searchable entity implementing
+ * app.krista.extension.util.EntityStore<{{ENTITY_CLASS}}>. HK2 discovers it automatically.
+ *
+ * Contract (all 9 methods). Declare `throws IOException` on the ones your backend needs it on.
+ *   create/get/update/delete/contains, two search overloads, count, lookup.
+ * Search never throws to the executor: catch, log, and return List.of() from search.
+ */
+@Service
+public class {{ENTITY_CLASS}}Store implements EntityStore<{{ENTITY_CLASS}}> {
+
+    private final {{DAO_CLASS}} dao;
+
+    @Inject
+    public {{ENTITY_CLASS}}Store({{DAO_CLASS}} dao) {
+        this.dao = dao;
+    }
+
+    @Override
+    public {{ENTITY_CLASS}} create(Map<String, Object> entityAttributeField) {
+        // TODO: business logic
+        return null;
+    }
+
+    @Override
+    public {{ENTITY_CLASS}} get(String primaryKey) throws IOException {
+        // TODO: business logic
+        return null;
+    }
+
+    @Override
+    public {{ENTITY_CLASS}} update({{ENTITY_CLASS}} entity) throws IOException {
+        // TODO: business logic
+        return entity;
+    }
+
+    @Override
+    public void delete(String primaryKey) {
+        // TODO: business logic — deletes may fail loud.
+    }
+
+    @Override
+    public boolean contains(String primaryKey) throws IOException {
+        // TODO: business logic
+        return false;
+    }
+
+    @Override
+    public List<{{ENTITY_CLASS}}> search(List<SearchCondition> conditions, long pageIndex, int pageSize) throws IOException {
+        // conditions: each has getFieldName()/getOperand(). Return List.of() on error (never throw).
+        // TODO: business logic
+        return List.of();
+    }
+
+    @Override
+    public List<{{ENTITY_CLASS}}> search(SearchQuery searchQuery, long pageIndex, int pageSize) throws IOException {
+        // searchQuery.getSearchConditions() / getQueryClauses()
+        // TODO: business logic
+        return List.of();
+    }
+
+    @Override
+    public long count(List<SearchCondition> conditions) throws IOException {
+        // TODO: business logic (may return 0 if the backend can't cheaply count)
+        return 0;
+    }
+
+    @Override
+    public List<String> lookup(Map<String, Object> fields, List<String> fieldNames) {
+        // TODO: business logic (name -> id resolution; may return List.of())
+        return List.of();
+    }
+}

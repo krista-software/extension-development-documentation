@@ -1,0 +1,30 @@
+# Save as .gitignore at the module root. Verbatim shape from the github extension.
+
+# Node artifact files (only if the extension ships a React UI)
+node_modules/
+dist/
+
+# Compiled Java class files
+*.class
+
+# Log files
+*.log
+
+# Package files
+*.jar
+
+# Gradle / Maven
+.gradle/
+build/
+target/
+
+# JetBrains IDE
+.idea/
+*.iml
+
+# Unit test reports
+TEST*.xml
+
+# OS files
+.DS_Store
+Thumbs.db

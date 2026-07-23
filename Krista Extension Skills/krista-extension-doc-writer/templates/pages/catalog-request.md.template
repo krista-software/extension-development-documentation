@@ -1,0 +1,58 @@
+<!--
+Per-catalog-request page — the LEAN, real-world house shape (github style). One file per request in
+pages/. The H1 MUST equal the @CatalogRequest `name`. Fill every value from the code (the
+@CatalogRequest method, its @Field inputs/outputs, its error strings) — never from a sibling page.
+
+Add sections only when the code justifies them. For a request with heavy validation / retry /
+business rules, escalate to the exhaustive 15-section template in the krista-extension-docs skill
+(references/catalog-request-template.md).
+-->
+# {{Request Name}}
+
+## Overview
+{{One or two sentences: what it does and the one capability that makes it distinct. Written for
+someone deciding whether this is the request they need.}}
+
+## Request Details
+- **Area**: {{@Domain area / @CatalogRequest area, e.g. Release Management}}
+- **Type**: {{QUERY_SYSTEM | CHANGE_SYSTEM | WAIT_FOR_EVENT}}
+- **External API**: `{{METHOD /endpoint/{path}, e.g. GET /repos/{owner}/{repo}/releases}}`
+- **Ask Agent (MCP)**: {{include this line ONLY if the @CatalogRequest has tool = true → "Enabled (callable by the Krista AI agent)"}}
+
+## Input Parameters
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| {{Name}} | {{Text}} | {{Yes/No}} | {{What it is; note default/fallback if optional.}} |
+
+<!-- Parameter names, types, and required-ness MUST match the @Field-annotated method parameters. -->
+
+## Output Parameters
+| Parameter | Type | Description |
+|---|---|---|
+| {{Items}} | {{[ Entity(X) ]}} | {{...}} |
+| {{Total Count}} | {{Number}} | {{...}} |
+
+<!-- For an entity/list output, add the nested field table (or link to entities.md): -->
+Each item in **{{Items}}** contains:
+
+| Field | Type | Description |
+|---|---|---|
+| {{ID}} | {{Number}} | {{...}} |
+| {{Name}} | {{Text}} | {{...}} |
+
+## Example
+**Input**: {{Param=`value`, Param=`value`}}
+**Output**: {{what comes back, with realistic values}}
+
+## Error Handling
+- **{{404 Not Found}}** — {{cause + what the user should do}}.
+- **{{422 Validation}}** — {{...}}.
+- {{Any behavior worth flagging, e.g. "Draft releases are only visible to users with push access."}}
+
+<!-- OPTIONAL sections (add only when the code has them):
+## Validation Rules      | Validation | Error Message | Resolution |
+## Business Rules        numbered list of enforced rules (filtering, case sensitivity, empty-result semantics)
+## Best Practices        actionable caller guidance
+## Related Requests      links to sibling request pages
+## Technical Implementation   the ONE developer-facing section (helper/service/telemetry) — keep short
+-->

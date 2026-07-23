@@ -14,6 +14,11 @@ description: >-
 
 # Bulk MCP-enable Krista release branches
 
+> Part of the Krista extension skill set (see the folder `README.md`). This is the **fleet-wide MCP**
+> option referenced by the `krista-extension-builder` runbook. For a single new extension, set
+> `tool = true` on requests during builder Phase 4; use this skill to bulk-enable MCP across many
+> existing `release/*` branches.
+
 Turn each extension's eligible catalog requests into MCP tools (`tool = true`) and standardize the
 `krista-apis` version, verified by compilation. Two bundled scripts under `scripts/` do the work;
 this file is the contract and the run recipe.

@@ -1,0 +1,20 @@
+[comment]: <> (Left navigation. Group requests by Area / use case. Every reachable page must be linked.)
+
+* [Home](/)
+
+* **Getting Started**
+    * [Overview](pages/overview.md)
+    * [Configuration](pages/ExtensionConfiguration.md)
+    * [Authentication](pages/Authentication.md)
+    * [Supported Requests](pages/supported-requests.md)
+
+* **{{AREA_1_NAME}}**
+    * [{{REQUEST_A}}](pages/{{REQUEST_A_FILE}}.md)
+    * [{{REQUEST_B}}](pages/{{REQUEST_B_FILE}}.md)
+
+* **{{AREA_2_NAME}}**
+    * [{{REQUEST_C}}](pages/{{REQUEST_C_FILE}}.md)
+
+* **Reference**
+    * [Entities](pages/entities.md)
+    * [Release Notes](pages/release-notes.md)

@@ -1,0 +1,52 @@
+package {{PACKAGE}}.integration;
+
+import {{PACKAGE}}.{{ATTRS_CLASS}};
+import com.google.gson.Gson;
+import okhttp3.OkHttpClient;
+import org.jvnet.hk2.annotations.Service;
+
+import javax.inject.Inject;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * HTTP client for the external system. Framework touchpoints only — the actual GET/POST plumbing and
+ * response parsing are business logic (left as TODO).
+ *
+ * DI: an HK2 @Service that @Injects the @Service attributes bean, so every Area shares one client.
+ * It reads credentials from {{ATTRS_CLASS}} and sends them on each call (e.g. Authorization: Bearer
+ * <token> for a PAT/API-key, or a token acquired from a token manager for OAuth2).
+ *
+ * Keep this class free of Krista annotations other than @Service so it stays unit-testable
+ * (e.g. against okhttp mockwebserver).
+ */
+@Service
+public class {{CLIENT_CLASS}} {
+
+    private static final OkHttpClient HTTP = new OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .build();
+
+    private static final Gson GSON = new Gson();
+
+    private final {{ATTRS_CLASS}} attributes;
+
+    @Inject
+    public {{CLIENT_CLASS}}({{ATTRS_CLASS}} attributes) {
+        this.attributes = attributes;
+    }
+
+    // Example framework-shaped call. Replace with your real methods.
+    // public <T> T get(String path, Class<T> type) throws IOException {
+    //     Request request = new Request.Builder()
+    //             .url(attributes.getBaseUrl() + path)
+    //             .header("Authorization", "Bearer " + attributes.getToken())
+    //             .header("Accept", "application/json")
+    //             .get().build();
+    //     try (Response response = HTTP.newCall(request).execute()) {
+    //         // TODO: business logic — status mapping (401/403/404/422/429), parse GSON.
+    //         return GSON.fromJson(response.body().string(), type);
+    //     }
+    // }
+}

@@ -5,6 +5,10 @@ description: Use when adding Authentication, Audit Dashboard, or AI Assistant (M
 
 # Adding microsoft-auth-sdk Tabs to a Krista Extension
 
+> Part of the Krista extension skill set (see the folder `README.md`). This is **Phase 3, auth
+> pattern D** of the `krista-extension-builder` runbook (Microsoft products) — invoke the builder to
+> create a whole extension; use this skill directly to add/repair MS-auth tabs on one.
+
 ## Overview
 
 Krista extensions get Authentication / Audit / AI-Assistant (MCP) tabs by migrating onto `app.krista.sdk:microsoft-auth-sdk:1.0.5`. The tabs are pre-built HTML inside the SDK JAR. Copy-adapt from the shipped references, then avoid the traps below — several survived expert planning and 13 per-task reviews before a final review caught them.

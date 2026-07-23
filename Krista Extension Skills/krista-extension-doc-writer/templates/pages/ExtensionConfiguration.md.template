@@ -1,0 +1,28 @@
+# Configuration
+
+The extension is configured through the **Setup** tab in Krista. Configuration is stored per-invoker
+— each invoker keeps its own independent connection and settings.
+
+## Setup tab fields
+
+| Field | Required | Default | Description |
+|-------|----------|---------|-------------|
+| {{FIELD_1}} | Yes | -- | {{what it is; note if secured/sent as Bearer}} |
+| {{FIELD_2}} | Yes | `{{default}}` | {{...}} |
+| {{FIELD_3}} | No | `{{default}}` | {{...}} |
+
+<!-- Pull every row verbatim from the @Field.* annotations on the @Extension class:
+     name, required, isSecured, and any default. -->
+
+## Required vs optional
+
+The extension validates these fields on save:
+
+1. **{{FIELD_1}}** — {{rule, e.g. "must start with https://"}}
+2. **{{FIELD_2}}** — must be present and non-empty
+
+All other fields use the defaults above if omitted.
+
+## Notes
+
+- {{Anything the user must know: multi-environment setup, per-request overrides of a default, etc.}}

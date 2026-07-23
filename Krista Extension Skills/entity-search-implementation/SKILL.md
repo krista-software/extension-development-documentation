@@ -5,6 +5,10 @@ description: Use when implementing, extending, reviewing, or migrating KME Entit
 
 # Entity Search Implementation Skill
 
+> Part of the Krista extension skill set (see the folder `README.md`). This is **Phase 5a** of the
+> `krista-extension-builder` runbook — invoke the builder to create a whole extension; use this skill
+> directly to add entity search to one.
+
 **Canonical reference:** `ENTITY_SEARCH_IMPLEMENTATION_SKILL.md` at the repo root (read the relevant section before each phase; it contains the full architecture, templates, and sequence diagrams). Reference implementation: `salesforce_sales`.
 
 ## Non-negotiable architecture rules

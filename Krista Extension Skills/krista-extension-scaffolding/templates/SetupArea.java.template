@@ -1,0 +1,86 @@
+package {{PACKAGE}}.catalog;
+
+import app.krista.extension.executor.ExtensionResponse;
+import app.krista.extension.executor.ExtensionResponseBuilder;
+import app.krista.extension.executor.Invoker;
+import app.krista.extension.impl.anno.CatalogRequest;
+import app.krista.extension.impl.anno.Domain;
+import app.krista.extension.impl.anno.Field;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+/**
+ * Setup area — the standard Test Connection + Health Check requests (github pattern).
+ *
+ * Most extensions ship these two QUERY/CHANGE requests in a "SetUp" area so operators can verify the
+ * appliance is running and can reach the external system. Health Check reports JVM/connectivity.
+ */
+@Domain(id = "{{DOMAIN_ID}}",
+        name = "{{DOMAIN_NAME}}",
+        ecosystemId = "{{ECOSYSTEM_ID}}",
+        ecosystemName = "{{ECOSYSTEM_NAME}}",
+        ecosystemVersion = "{{ECOSYSTEM_VERSION}}")
+public class SetupArea {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SetupArea.class);
+
+    private final {{CLIENT_CLASS}} client;
+    private final String invokerId;
+
+    @Inject
+    public SetupArea({{CLIENT_CLASS}} client, Invoker invoker) {
+        this.client = client;
+        this.invokerId = invoker.getInvokerId();
+    }
+
+    @CatalogRequest(
+            id = "localDomainRequest_<uuid>",
+            name = "Test Connection",
+            description = "Validate connectivity and authentication",
+            area = "SetUp",
+            type = CatalogRequest.Type.QUERY_SYSTEM,
+            tool = true)
+    @Field.Boolean(name = "Success", required = false)
+    @Field.Text(name = "Message", required = false)
+    public ExtensionResponse testConnection() {
+        Map<String, Object> out = new LinkedHashMap<>();
+        try {
+            // TODO: business logic — make one lightweight authenticated call via client.
+            out.put("Success", true);
+            out.put("Message", "Connected.");
+        } catch (Exception e) {
+            LOG.error("Test connection failed for invoker {}", invokerId, e);
+            out.put("Success", false);
+            out.put("Message", e.getMessage());
+        }
+        return new ExtensionResponseBuilder().success(out).build();
+    }
+
+    @CatalogRequest(
+            id = "localDomainRequest_<uuid>",
+            name = "Health Check",
+            description = "Check extension and system health",
+            area = "SetUp",
+            type = CatalogRequest.Type.CHANGE_SYSTEM,
+            tool = true)
+    @Field.Boolean(name = "Is Healthy", required = false)
+    @Field(name = "Heap Used MB", type = "Number", required = false)
+    @Field.Text(name = "Details", required = false)
+    public ExtensionResponse healthCheck() {
+        Map<String, Object> out = new LinkedHashMap<>();
+        MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+        long heapUsedMb = memBean.getHeapMemoryUsage().getUsed() / (1024 * 1024);
+        boolean healthy = true;
+        // TODO: business logic — optionally ping the external system and set healthy accordingly.
+        out.put("Is Healthy", healthy);
+        out.put("Heap Used MB", (double) heapUsedMb);
+        out.put("Details", "OK");
+        return new ExtensionResponseBuilder().success(out).build();
+    }
+}

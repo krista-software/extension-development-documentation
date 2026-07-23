@@ -1,0 +1,5 @@
+# gradle.properties — needed for the Artifactory repo and (if enabled) publishing / Docker.
+# The MAVEN_USERNAME / MAVEN_PASSWORD / MAVEN_UPLOAD_URL for the publishing block are usually passed
+# with -P on the command line or set in ~/.gradle/gradle.properties, not committed here.
+systemProp.MAVEN_URL=https://packages.cicd.in.antbrains.com/artifactory/libs-release
+systemProp.DOCKER_REPO=images.cicd.in.antbrains.com/docker-release

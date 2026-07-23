@@ -1,0 +1,30 @@
+package {{PACKAGE}}.api;
+
+import org.jvnet.hk2.annotations.ContractsProvided;
+import org.jvnet.hk2.annotations.Service;
+
+import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.core.Application;
+import java.util.Set;
+
+/**
+ * JAX-RS application for inbound HTTP (webhooks, OAuth callbacks).
+ *
+ * Registered as an HK2 @Service with @ContractsProvided(Application.class). Mounted at
+ * rest/<jaxrsId>/<ApplicationPath>/... where <jaxrsId> is @Extension(jaxrsId=...) (default "rest").
+ * List every resource class in getClasses().
+ *
+ * NOTE: Krista extensions use plain JAX-RS (javax.ws.rs), NOT a special @ApiRequest annotation.
+ */
+@Service
+@ApplicationPath("/")
+@ContractsProvided(Application.class)
+public final class {{APP_CLASS}} extends Application {
+    @Override
+    public Set<Class<?>> getClasses() {
+        return Set.of(
+                {{WEBHOOK_RESOURCE_CLASS}}.class
+                // , AuthCallbackResource.class  // add for interactive OAuth (Pattern C)
+        );
+    }
+}

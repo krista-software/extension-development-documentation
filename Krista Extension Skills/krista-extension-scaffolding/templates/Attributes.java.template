@@ -1,0 +1,61 @@
+package {{PACKAGE}};
+
+import app.krista.extension.executor.Invoker;
+import org.jvnet.hk2.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import java.util.Map;
+
+/**
+ * {{EXT_NAME}} connection configuration and credentials.
+ *
+ * HK2 @Service so it can be injected into the extension and the API client. The key constants are
+ * referenced by the class-level @Field.Text(value = ...) on {{EXT_CLASS}}. Keep the key strings
+ * stable — they are the saved-configuration contract.
+ */
+@Service
+public class {{ATTRS_CLASS}} {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger({{ATTRS_CLASS}}.class);
+
+    public static final String CLIENT_ID = "Client ID";
+    public static final String CLIENT_SECRET = "Client Secret";
+    public static final String BASE_URL = "Base URL";
+
+    private String clientId;
+    private String clientSecret;
+    private String baseUrl;
+
+    @Inject
+    public {{ATTRS_CLASS}}(Invoker invoker) {
+        this(invoker.getAttributes());
+    }
+
+    public {{ATTRS_CLASS}}(Map<String, Object> attributes) {
+        update(attributes);
+    }
+
+    public static {{ATTRS_CLASS}} create(Invoker invoker, Map<String, Object> attributes) {
+        {{ATTRS_CLASS}} result = new {{ATTRS_CLASS}}(invoker);
+        result.update(attributes);
+        return result;
+    }
+
+    public void update(Map<String, Object> attributes) {
+        this.clientId = getString(attributes, CLIENT_ID, "");
+        this.clientSecret = getString(attributes, CLIENT_SECRET, "");
+        this.baseUrl = getString(attributes, BASE_URL, "");
+        LOGGER.info("{{EXT_NAME}} attributes updated - Base URL: {}", baseUrl);
+    }
+
+    private String getString(Map<String, Object> attributes, String key, String defaultValue) {
+        Object value = attributes == null ? null : attributes.get(key);
+        return value != null ? value.toString() : defaultValue;
+    }
+
+    public String getClientId() { return clientId; }
+    public String getClientSecret() { return clientSecret; }
+    public String getBaseUrl() { return baseUrl; }
+}

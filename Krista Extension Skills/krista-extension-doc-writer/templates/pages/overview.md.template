@@ -1,0 +1,20 @@
+# Overview
+
+{{EXT_NAME}} connects Krista to {{SYSTEM_NAME}} via its {{API_OR_PROTOCOL}}. Use it to
+{{HIGH_LEVEL_CAPABILITY}} directly from Krista workflows and agents.
+
+## Use cases
+
+- **{{USE_CASE_1}}** — {{one line}}.
+- **{{USE_CASE_2}}** — {{one line}}.
+
+## What you can do
+
+The extension exposes {{N}} requests grouped by area — see [Supported Requests](supported-requests.md)
+for the full list, or the sidebar for each request's detailed page.
+
+## Before you start
+
+1. Obtain credentials — see [Authentication](Authentication.md).
+2. Configure the Setup tab — see [Configuration](ExtensionConfiguration.md).
+3. Run **Test Connection** (Setup area) to verify connectivity.

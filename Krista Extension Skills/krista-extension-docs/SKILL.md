@@ -15,6 +15,11 @@ description: >-
 
 # Krista Extension Documentation Sync
 
+> Part of the Krista extension skill set (see the folder `README.md`). This is **Phase 7 / ongoing
+> maintenance** of the `krista-extension-builder` runbook — it SYNCS/AUDITS existing docs against
+> code (with `scripts/audit_docs.py`). To AUTHOR docs from scratch, use `krista-extension-doc-writer`;
+> to build a whole extension, invoke `krista-extension-builder`.
+
 ## What this is for
 
 Every Krista Global Catalog extension ships an in-platform **Documentation** tab. It is a

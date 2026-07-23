@@ -1,0 +1,2 @@
+// Only needed if the module builds standalone (jira/slack/salesforce style). Single-module extension.
+rootProject.name = '{{EXT_MODULE}}'   // e.g. 'servicetrade'

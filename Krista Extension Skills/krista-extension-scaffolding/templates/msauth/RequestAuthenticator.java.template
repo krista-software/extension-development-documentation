@@ -1,0 +1,50 @@
+package {{PACKAGE}};
+
+import app.krista.sdk.msauth.extension.base.AbstractRequestAuthenticator;
+import app.krista.sdk.msauth.extension.base.MsAuthAttributes;
+import app.krista.sdk.msauth.token.ITokenStore;
+import app.krista.sdk.msauth.token.InMemoryTokenStore;
+import org.jvnet.hk2.annotations.Service;
+
+import javax.inject.Inject;
+
+/**
+ * Microsoft-auth-SDK request authenticator. Extends the SDK base; you only override attribute/token
+ * plumbing. super(invokerId, routingUrl, callbackPathPrefix) — the callbackPathPrefix MUST match
+ * @MsAuthExtension(callbackPathPrefix=...).
+ *
+ * getCallbackEndPoint()/getForwardPath() live on the *Attributes class (implements MsAuthAttributes),
+ * not here.
+ */
+@Service
+public class {{MSAUTH_AUTHENTICATOR_CLASS}} extends AbstractRequestAuthenticator {
+
+    @Inject
+    public {{MSAUTH_AUTHENTICATOR_CLASS}}({{ATTR_STORE_CLASS}} attributeStore, String invokerId,
+                                           app.krista.ksdk.context.AuthorizationContext authorizationContext,
+                                           String routingUrl) {
+        super(invokerId, routingUrl, "/{{EXT_TYPE}}");
+        // TODO: keep references you need (attributeStore, authorizationContext)
+    }
+
+    @Override
+    protected MsAuthAttributes loadAttributes(String key) {
+        // TODO: business logic — load persisted attributes for this invoker/account key.
+        return null;
+    }
+
+    @Override
+    protected ITokenStore getTokenStore() {
+        return new InMemoryTokenStore();
+    }
+
+    @Override
+    protected MsAuthAttributes createDefaultAttributes(String routingUrl) {
+        // TODO: business logic — build a default MsAuthAttributes (public/own mode).
+        return null;
+    }
+
+    // Optional overrides (implement only if the product needs them):
+    // @Override protected String getNotificationPath() { return "/{{EXT_TYPE}}/notification"; }
+    // @Override protected String resolveNotificationAccountId() { ... }
+}

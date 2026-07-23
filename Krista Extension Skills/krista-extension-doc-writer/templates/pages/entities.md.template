@@ -1,0 +1,19 @@
+# Entities
+
+Data structures returned by the requests. Request output tables link here instead of repeating the
+full field list.
+
+## {{Entity Name}}
+{{One line: what this entity represents and its primary key. Note cross-references, e.g. "Owner Id
+references User.Id."}}
+
+| Field | Type | Description |
+|---|---|---|
+| {{Id}} | {{Text}} | {{Primary key.}} |
+| {{Name}} | {{Text}} | {{...}} |
+| {{Created Date}} | {{Date}} | {{...}} |
+
+<!-- Pull fields verbatim from the @Entity class's @Field-annotated fields (name, type, description). -->
+
+## {{Next Entity}}
+...

@@ -1,0 +1,78 @@
+package {{PACKAGE}}.catalog.entities;
+
+import app.krista.extension.impl.anno.Attribute;
+import app.krista.extension.impl.anno.Domain;
+import app.krista.extension.impl.anno.Entity;
+import app.krista.extension.impl.anno.Field;
+import app.krista.extension.impl.anno.Searchable;
+import app.krista.extension.impl.anno.ToString;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * {{ENTITY_NAME}} entity.
+ *
+ * Class-level @Searchable + @Domain + @Entity. Each field is @Field.*; mark searchable fields with
+ * @Searchable and the display field with @ToString. supportStore = true requires a matching
+ * @Service EntityStore<{{ENTITY_CLASS}}> (see EntityStore.java.template). Cross-references to other
+ * entities go in the description prose ("References User.Display Name.").
+ */
+@Searchable
+@Domain(id = "{{DOMAIN_ID}}",
+        name = "{{DOMAIN_NAME}}",
+        ecosystemId = "{{ECOSYSTEM_ID}}",
+        ecosystemName = "{{ECOSYSTEM_NAME}}",
+        ecosystemVersion = "{{ECOSYSTEM_VERSION}}")
+@Entity(name = "{{ENTITY_NAME}}",
+        id = "localDomainEntity_<uuid>",
+        primaryKey = "Id",
+        supportStore = true,
+        description = "{{ENTITY_DESCRIPTION}}")
+public class {{ENTITY_CLASS}} {
+
+    @Searchable
+    @Field.Text(name = "Id", required = false, description = "Unique identifier.")
+    public String id;
+
+    @Searchable
+    @ToString
+    @Field.Text(name = "Name", description = "Display name.")
+    public String name;
+
+    @Searchable
+    @Field(name = "Description", type = "RichText", required = false)
+    public String description;
+
+    // List-of-text field example:
+    @Field.Desc(name = "Labels", type = "[ Text ]", required = false)
+    public List<String> labels;
+
+    // Date field example (Java Long, epoch millis):
+    @Searchable
+    @Field.Date(name = "Created Date", required = false, includeTimeOfDay = true,
+            allowPast = true, allowToday = true, allowFuture = true,
+            description = "When the record was created.",
+            attributes = {@Attribute(name = "visualWidth", value = "S"),
+                          @Attribute(name = "dateFormat", value = "'MMM DD, yyyy h:mm:ss a'")}, options = {})
+    public Long createdDate;
+
+    /** Insertion-ordered field map, keyed by the @Field display names. */
+    public Map<String, Object> toFields() {
+        Map<String, Object> fieldMap = new LinkedHashMap<>();
+        fieldMap.put("Id", id);
+        fieldMap.put("Name", name);
+        fieldMap.put("Description", description);
+        fieldMap.put("Labels", labels);
+        fieldMap.put("Created Date", createdDate);
+        return fieldMap;
+    }
+
+    /** Optional inverse mapper (salesforce style). */
+    public static {{ENTITY_CLASS}} fromFields(Map<String, Object> fields) {
+        {{ENTITY_CLASS}} e = new {{ENTITY_CLASS}}();
+        // TODO: populate from fields
+        return e;
+    }
+}

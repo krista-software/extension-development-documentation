@@ -1,0 +1,26 @@
+# Release Notes
+
+- **Developer Name** : {{Your Name}}
+- **Krista Service APIs Java** : {{version from extension-impl-anno-processors in build.gradle}}
+- **Global Catalog Version** : {{GC-YYYY.M.R, if the module tracks one}}
+
+## v{{X.Y.Z}} ({{Month Year}})
+
+{{One-line theme of this release, optionally with the Jira key.}}
+
+### New Features
+* {{User-visible capability added. Lead with the capability, then how it works. "Not Available" if none.}}
+
+### Resolved Bugs
+* {{What the user will no longer experience. "Not Available" if none.}}
+
+### Dependency Updates
+* {{Notable version bumps, especially behavior-changing ones. "Not Available" if none.}}
+
+### Known Issues
+* {{Known defects shipping this release. "Not Available" if none.}}
+
+### Limitations and Caveats
+* {{Standing constraints (API scope, required permissions, prerequisites). Usually carried forward.}}
+
+<!-- Newest block on top; keep prior blocks untouched. This file is the @ChangeLog target. -->

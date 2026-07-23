@@ -1,0 +1,355 @@
+// =====================================================================================================
+// build.gradle — COMPLETE Krista extension build (fat-jar + release.properties generation + JaCoCo +
+// SonarQube + maven-publish + optional React-UI build). Every block observed across the
+// autotask / connect-wise / salesforce / jira / restapi branches is included here.
+//
+// HOW TO USE
+//   1. Replace the {{PLACEHOLDERS}}.
+//   2. Keep the CORE section (always required).
+//   3. Enable the OPTIONAL sections you need (each is marked "OPTIONAL — enable if ...").
+//      Blocks that would fail without extra project files (Sonar server, React UI) are safe to leave
+//      as-is; they only run when their task is invoked.
+//   4. Add dependencies using the DEPENDENCY CATALOG below — match the capability/SDK to coordinates.
+//
+// Placeholders: {{GROUP}} {{EXT_NAME}} {{KRISTA_APIS_VERSION}} {{PACKAGE_PATH}} {{EXT_CLASS}}
+//               {{AREA_CLASS}} {{DOMAIN_NAME}} {{ECOSYSTEM_NAME}} {{SONAR_KEY}}
+//   {{PACKAGE_PATH}} = package with dots→slashes, e.g. app/krista/extensions/essentials/fsm/servicetrade
+// =====================================================================================================
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'jacoco'                                        // OPTIONAL — code coverage (feeds Sonar)
+    id("org.sonarqube") version "6.3.1.5724"           // OPTIONAL — static analysis
+    // id("com.github.node-gradle.node") version "3.1.0"  // OPTIONAL — ONLY if the extension ships a React auth UI
+}
+
+group '{{GROUP}}'   // e.g. app.krista.extensions.Essentials.FieldServiceManagement
+
+ext {
+    // krista-apis and extension-impl-anno-processors MUST stay on the same version.
+    // 1.0.126 recommended; use >= 1.0.125-sp1 if you need @CatalogRequest(tool = true) for MCP.
+    kristaApisVersion = '{{KRISTA_APIS_VERSION}}'
+}
+
+def computedBaseName = "{{EXT_NAME}}-extension"
+def computedVersion = "local"
+
+tasks.register("setReleaseProperties") {
+    dependsOn("generateReleaseProperties")
+    doFirst {
+        def releasePropsFile = file("release.properties")
+        if (releasePropsFile.exists()) {
+            def props = new Properties()
+            releasePropsFile.withInputStream { stream -> props.load(stream) }
+            computedBaseName = (props['extension.name'] ?: computedBaseName).replaceAll(/\s+/, "")
+            computedVersion = props['extension.version'] ?: computedVersion
+            project.ext.set("finalBaseName", computedBaseName)
+            project.version = computedVersion
+            println "✓ Loaded extension name = ${computedBaseName}, version = ${computedVersion}"
+        } else {
+            logger.warn("⚠ release.properties not found; using default values.")
+            project.ext.set("finalBaseName", computedBaseName)
+            project.version = computedVersion
+        }
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenLocal()
+    maven { url "https://packages.cicd.in.antbrains.com/artifactory/libs-release" }  // internal Krista Artifactory
+    mavenCentral()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-Xlint:all,-serial'
+}
+
+configurations {
+    implementation {
+        canBeConsumed = false
+        canBeResolved = true
+    }
+    // OPTIONAL — UI-bearing SDKs (microsoft-auth-sdk, krista-atlassian-sdk) ship pre-built tab HTML
+    // inside the jar. Declare a non-transitive config to extract it (see extractSDKResources below).
+    // sdkUi { canBeResolved = true; transitive = false }
+}
+
+// =====================================================================================================
+// DEPENDENCY CATALOG — add what the extension needs. Coordinates below are the exact versions used by
+// shipping extensions. When a user says "I need X", map it here; add BOTH the implementation dependency
+// AND, for UI-bearing SDKs, the sdkUi entry + extractSDKResources task (see OPTIONAL block near the end).
+//
+//   Capability / SDK                     Coordinates (observed)
+//   -----------------------------------  --------------------------------------------------------------
+//   Krista framework (ALWAYS)            app.krista:krista-apis:<ver>  (+ annotationProcessor same ver)
+//   HK2 DI api                           org.glassfish.hk2:hk2-api:3.0.3   (or 2.6.1)
+//   HTTP client                          com.squareup.okhttp3:okhttp:4.12.0  (+ logging-interceptor:4.12.0)
+//   JSON (Gson)                          com.google.code.gson:gson:2.11.0
+//   JSON (Jackson)                       com.fasterxml.jackson.core:jackson-databind:2.17.1 (+ core/annotations)
+//   Apache HttpClient                    org.apache.httpcomponents:httpclient:4.5.14 (+ httpmime:4.5.14)
+//   JAX-RS multipart / file I/O          org.glassfish.jersey.media:jersey-media-multipart:2.35
+//   Jersey client (custom OAuth calls)   org.glassfish.jersey.core:jersey-client:2.35 (+ connectors:jersey-apache-connector:2.35)
+//   OAuth2 (interactive / 3-legged)      com.github.scribejava:scribejava-apis:8.3.3
+//   Microsoft products (Outlook/SP/…)    app.krista.sdk:microsoft-auth-sdk:1.0.5  [UI-bearing → sdkUi]
+//                                        + com.microsoft.graph:microsoft-graph:5.80.0
+//                                        + com.microsoft.graph:microsoft-graph-auth:0.3.0
+//                                        + com.azure:azure-identity:1.11.2   (needs krista-apis 1.0.125-sp1)
+//   Atlassian products (Jira/Confluence) app.krista.sdk:krista-atlassian-sdk:1.0.0  [UI-bearing → sdkUi]
+//   Resilience (retry/circuit-breaker)   io.github.resilience4j:resilience4j-retry:2.1.0 (+ resilience4j-circuitbreaker:2.1.0)
+//   Phone parsing                        com.googlecode.libphonenumber:libphonenumber:8.13.25
+//   CSV                                  com.opencsv:opencsv:5.9
+//   XML (JAXB / Jettison)                org.glassfish.jaxb:jaxb-runtime:2.3.1 ; org.codehaus.jettison:jettison:1.5.4
+//   Excel (POI)                          org.apache.poi:poi:5.2.5 (+ poi-ooxml:5.2.5)
+//   Logging bridge                       org.apache.logging.log4j:log4j-slf4j-impl:2.19.0
+//   Shared Krista lib module             implementation project(':base-authentication')  (multi-module only)
+//   Testing                              org.junit.jupiter:junit-jupiter:5.10.1 ; org.mockito:mockito-core:5.8.0
+//                                        com.squareup.okhttp3:mockwebserver:4.12.0 ; com.kristasoft.common:common-test:1.0.48
+//
+//   RULE OF THUMB for a new/unknown SDK: prefer `implementation '<group>:<artifact>:<version>'` from the
+//   Krista Artifactory or mavenCentral; if the SDK bundles Setup-tab HTML (auth/audit/mcp tabs), it is
+//   "UI-bearing" → also add an `sdkUi` entry + an extractSDKResources Copy task.
+// =====================================================================================================
+dependencies {
+    // --- CORE (always) ---
+    annotationProcessor "app.krista:extension-impl-anno-processors:${kristaApisVersion}"
+    implementation "app.krista:krista-apis:${kristaApisVersion}"
+    implementation 'org.glassfish.hk2:hk2-api:3.0.3'
+
+    // --- Integration (adjust to your client; see catalog above) ---
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+    implementation 'com.google.code.gson:gson:2.11.0'
+
+    // --- OPTIONAL: interactive OAuth2 ---
+    // implementation 'com.github.scribejava:scribejava-apis:8.3.3'
+
+    // --- OPTIONAL: Microsoft-auth-SDK (also add the sdkUi + extractSDKResources block below) ---
+    // implementation 'app.krista.sdk:microsoft-auth-sdk:1.0.5'
+    // implementation 'com.microsoft.graph:microsoft-graph:5.80.0'
+    // implementation 'com.microsoft.graph:microsoft-graph-auth:0.3.0'
+    // implementation 'com.azure:azure-identity:1.11.2'
+    // sdkUi 'app.krista.sdk:microsoft-auth-sdk:1.0.5'
+
+    // --- Testing ---
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.mockito:mockito-core:5.8.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.8.0'
+    // testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+}
+
+// =====================================================================================================
+// OPTIONAL — publish the jar to the Krista Maven repo (jira/restapi style). Uses gradle.properties /
+// -P credentials: MAVEN_USERNAME, MAVEN_PASSWORD, MAVEN_UPLOAD_URL.
+// =====================================================================================================
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            afterEvaluate {
+                artifactId = jar.archiveBaseName.get()
+                groupId = rootProject.group
+            }
+        }
+    }
+    repositories {
+        mavenLocal()
+        maven {
+            credentials {
+                username = project.findProperty('MAVEN_USERNAME')
+                password = project.findProperty('MAVEN_PASSWORD')
+            }
+            authentication { basic(BasicAuthentication) }
+            url project.findProperty('MAVEN_UPLOAD_URL') ?: mavenLocal().url
+        }
+    }
+}
+
+// =====================================================================================================
+// OPTIONAL — JaCoCo coverage + SonarQube. Safe to leave enabled; sonar only runs when you invoke it.
+// =====================================================================================================
+jacoco {
+    toolVersion = "0.8.12"
+}
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true      // required by SonarQube
+        html.required = true
+        csv.required = false
+    }
+}
+sonar {
+    properties {
+        property("sonar.projectName", "SonarScanner for {{EXT_NAME}} (JaCoCo coverage)")
+        property("sonar.projectKey", "sonar-scanner-{{SONAR_KEY}}")   // e.g. sonar-scanner-servicetrade
+        property("sonar.sources", "src/main/java")
+        property("sonar.tests", "src/test/java")
+        property("sonar.java.binaries", "build/classes/java/main")
+        property("sonar.java.test.binaries", "build/classes/java/test")
+        property("sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml")
+        property("sonar.junit.reportPaths", "build/test-results/test")
+    }
+}
+tasks.named("sonar") { dependsOn jacocoTestReport }   // ensure coverage exists before analysis
+
+// =====================================================================================================
+// CORE — generate release.properties from the @Extension and @Domain annotations.
+// EDIT the two paths below to your extension class and one Area class that carries @Domain.
+// =====================================================================================================
+import java.util.regex.Pattern
+
+tasks.register('generateReleaseProperties') {
+    group = 'build'
+    description = 'Generates release.properties from @Extension and @Domain annotations'
+    doLast {
+        def extensionFilePath = 'src/main/java/{{PACKAGE_PATH}}/{{EXT_CLASS}}.java'
+        def areaFilePath = 'src/main/java/{{PACKAGE_PATH}}/catalog/{{AREA_CLASS}}.java'
+        def extensionFile = project.file(extensionFilePath)
+        def areaFile = project.file(areaFilePath)
+        if (!extensionFile.exists()) { throw new GradleException("Extension file not found: ${extensionFilePath}") }
+        if (!areaFile.exists()) { throw new GradleException("Area file not found: ${areaFilePath}") }
+
+        def properties = new Properties()
+        def keyValuePattern = Pattern.compile(/(\w+)\s*=\s*"([^"]+)"/)
+
+        extractAnnotationInfo(extensionFile, "@Extension", keyValuePattern) { key, value ->
+            if (key == "version") { properties.setProperty("extension.version", value) }
+            else if (key == "name") { properties.setProperty("extension.name", value) }
+        }
+        extractAnnotationInfo(areaFile, "@Domain", keyValuePattern) { key, value ->
+            if (key == "name") { properties.setProperty("domain.name", value) }
+            else if (key == "ecosystemName") { properties.setProperty("ecosystem.name", value) }
+        }
+
+        if (!properties.getProperty('extension.name')) { properties.setProperty("extension.name", "{{EXT_NAME}}") }
+        if (!properties.getProperty('extension.version')) { throw new GradleException("Could not find extension version in ${extensionFilePath}") }
+        if (!properties.getProperty('domain.name')) { properties.setProperty("domain.name", "{{DOMAIN_NAME}}") }
+        if (!properties.getProperty('ecosystem.name')) { properties.setProperty("ecosystem.name", "{{ECOSYSTEM_NAME}}") }
+
+        def releasePropertiesFile = project.file('release.properties')
+        def content = properties.collect { key, value -> "${key}=${value}" }.join('\n')
+        releasePropertiesFile.text = content + '\n'
+        logger.lifecycle("Generated release.properties:\n${content}")
+    }
+}
+
+def extractAnnotationInfo(File file, String annotationName, Pattern keyValuePattern, Closure processProperty) {
+    StringBuilder annotationText = new StringBuilder()
+    boolean inAnnotation = false
+    file.eachLine { line ->
+        line = line.trim()
+        if (line.contains(annotationName)) { inAnnotation = true; annotationText.setLength(0); annotationText.append(line) }
+        else if (inAnnotation) { annotationText.append(line) }
+        if (inAnnotation && line.contains(")")) {
+            inAnnotation = false
+            def matcher = keyValuePattern.matcher(annotationText.toString())
+            while (matcher.find()) { processProperty.call(matcher.group(1), matcher.group(2)) }
+        }
+    }
+}
+
+// =====================================================================================================
+// CORE — bundle sources into the jar under META-INF/project (platform convention).
+// =====================================================================================================
+tasks.register('createSourceDir', Exec) {
+    dependsOn processResources
+    commandLine "mkdir", "-p", "$projectDir/build/classes/java/main/META-INF/project"
+}
+tasks.register('copyGradleFile', Exec) {
+    dependsOn createSourceDir
+    commandLine "cp", "$projectDir/build.gradle", "$projectDir/build/classes/java/main/META-INF/project/build.gradle"
+}
+tasks.register('includeSources', Exec) {
+    dependsOn copyGradleFile
+    commandLine "cp", "-r", "$projectDir/src", "$projectDir/build/classes/java/main/META-INF/project/src"
+}
+
+// =====================================================================================================
+// OPTIONAL — UI-bearing SDK resource extraction (microsoft-auth-sdk / krista-atlassian-sdk).
+// Requires the `sdkUi` configuration (see configurations block) + the sdkUi dependency.
+// =====================================================================================================
+// tasks.register('extractSDKResources', Copy) {
+//     def sdkJar = configurations.sdkUi.singleFile
+//     from(zipTree(sdkJar)) {
+//         include 'auth/index.html'
+//         include 'audit/index.html'
+//         include 'mcp-setup/index.html'   // include only if you expose the AI Assistant tab
+//     }
+//     into("${project.buildDir}/resources/main")
+//     includeEmptyDirs = false
+// }
+// tasks.named('processResources') { dependsOn(tasks.named('extractSDKResources')) }
+
+// =====================================================================================================
+// OPTIONAL — React auth-UI build (restapi style). Requires the node plugin (see plugins block) and a
+// UI project under src/main/ui/<name>/. Only enable if the extension ships its own UI.
+// =====================================================================================================
+// node {
+//     version = '24.2.0'; npmVersion = '10.7.0'; yarnVersion = '1.22.17'; download = true
+//     nodeModulesDir = file("${project.projectDir}/src/main/ui/{{UI_DIR}}/")
+// }
+// tasks.register('bundleUI', com.github.gradle.node.yarn.task.YarnTask) {
+//     dependsOn 'nodeSetup', 'yarnSetup', 'yarn'
+//     execOverrides { it.workingDir = "src/main/ui/{{UI_DIR}}"; it.environment("CI", "false") }
+//     args = ['build']
+// }
+// tasks.register('buildAndCopyUI', Copy) {
+//     dependsOn(tasks.named("bundleUI"))
+//     from("${project.projectDir}/src/main/ui/{{UI_DIR}}/build")
+//     into("${project.buildDir}/resources/main/ui/{{UI_DIR}}")
+// }
+// tasks.named('compileTestJava') { dependsOn(tasks.named('buildAndCopyUI')) }
+
+// =====================================================================================================
+// OPTIONAL — candidate/release pipeline hooks (restapi/slack style). Drive candidate.sh / release.sh.
+// =====================================================================================================
+// tasks.register('candidate', Exec) {
+//     commandLine "env",
+//         "MAVEN_UPLOAD_URL=" + project.findProperty('MAVEN_UPLOAD_URL'),
+//         "MAVEN_USERNAME=" + project.findProperty('MAVEN_USERNAME'),
+//         "MAVEN_PASSWORD=" + project.findProperty('MAVEN_PASSWORD'),
+//         "bash", "candidate.sh"
+// }
+// tasks.register('release', Exec) {
+//     commandLine "env",
+//         "MAVEN_UPLOAD_URL=" + project.findProperty('MAVEN_UPLOAD_URL'),
+//         "MAVEN_USERNAME=" + project.findProperty('MAVEN_USERNAME'),
+//         "MAVEN_PASSWORD=" + project.findProperty('MAVEN_PASSWORD'),
+//         "bash", "release.sh"
+// }
+
+// =====================================================================================================
+// CORE — the fat jar. Bundles all `implementation` deps. Enable the buildAndCopyUI dependsOn only if
+// you enabled the React UI block above.
+// =====================================================================================================
+tasks.named("jar") {
+    dependsOn tasks.named("generateReleaseProperties")
+    // dependsOn tasks.named("buildAndCopyUI")   // enable with the React UI block
+}
+
+jar {
+    dependsOn tasks.named("setReleaseProperties")
+    dependsOn includeSources
+    archiveBaseName = project.ext.has("finalBaseName") ? project.ext.finalBaseName : "{{EXT_NAME}}-extension"
+    manifest {}
+    from { configurations.implementation.collect { it.isDirectory() ? it : zipTree(it) } }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+    duplicatesStrategy = "exclude"
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+    finalizedBy jacocoTestReport   // remove if you disable the JaCoCo block
+}
